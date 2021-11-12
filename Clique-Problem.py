@@ -31,13 +31,13 @@ from dwave.system.composites import EmbeddingComposite
 
 # Parameters 
 num_reads = 1
-gamma = 100
+gamma = 80
 
 
 
 
-sampler = EmbedddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
-sampleset = sampler.sample_qubo(Q)
+#sampler = EmbedddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
+#sampleset = sampler.sample_qubo(Q)
 
 
 
