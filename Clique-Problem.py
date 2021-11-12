@@ -31,7 +31,7 @@ from dwave.system.composites import EmbeddingComposite
 
 # Parameters 
 num_reads = 1
-gamma = 10
+gamma = 100
 
 
 
