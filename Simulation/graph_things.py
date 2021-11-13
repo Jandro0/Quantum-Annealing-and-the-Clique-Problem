@@ -237,11 +237,12 @@ networkG = nx.fast_gnp_random_graph(20, 0.6)
 networkToFile(networkG, "graph4.txt")
 print(nx.graph_clique_number(networkG))
 
+for i, j in networkG.edges: 
+    print(i,j)
+
+a = np.linspace(0, 1, 20)
+for i in networkG.nodes:
+    print(a[i])
 
 
-
-
-
-
-
-
+b = [i for i in networkG.nodes if a[i]]

@@ -23,9 +23,12 @@ Things to do:
 import numpy as np
 import networkx as nx
 import dwave_networkx as dnx
+import matplotlib
+matplotlib.use("agg")
+import matplotlib.pyplot as plt
 from collections import defaultdict
 from Functions import fileToNetwork, networkToFile
-from dwave.system.samplers import DWaveSampler
+from dwave.system.samplers import DWaveSampler, LeapHybridSampler, LeapHybridBQMSampler
 from dwave.system.composites import EmbeddingComposite
 
 
@@ -37,14 +40,9 @@ nv = nx.number_of_nodes(G)
 
 # Quantum parameters 
 num_reads = 10
-gamma = K + 1
-chain_strength = 10
-
-
-
-# Parameters 
-num_reads = 1
-gamma = 80
+B = 1
+gamma = (K + 1)*B
+chain_strength = 150
 
 
 
@@ -57,20 +55,30 @@ for j in range(nv):
         Q[(i,j)] += 2*gamma
 
 for i,j in G.edges:
-    Q[(int(i),int(j))] -= 1
+    Q[(int(i),int(j))] -= B
 
 
-constant = gamma*K*K + K*(K-1)/2
+constant = gamma*K*K + B*K*(K-1)/2
 
 
 
-# Run the QUBO
-sampler = EmbeddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
-sampleset = sampler.sample_qubo(Q,
-                                chain_strength=chain_strength,
-                                num_reads=num_reads,
-                                label='Test - Clique Problem')
+# Run the QUBO with the desired sampler
+select = 0
+if (select == 0):
+    sampler = EmbeddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
+    sampleset = sampler.sample_qubo(Q,
+                                    chain_strength=chain_strength,
+                                    num_reads=num_reads,
+                                    label='Test - Clique Problem')
+elif (select == 1):
+    sampler = LeapHybridSampler()
+    sampleset = sampler.sample_qubo(Q)
+elif (select == 2):
+    sampler = LeapHybridBQMSampler()
+    sampleset = sampler.sample_qubo(Q)
 
+
+# Print results
 print(sampleset.to_pandas_dataframe())
 print(' ')
 print('Energy: ' + str(constant + sampleset.first.energy))
@@ -81,10 +89,25 @@ print('Energy: ' + str(constant + sampleset.first.energy))
 
 
 # Check if the best solution found is actually a K-clique
+state = sampleset.record[0][0]
 if (constant == -sampleset.first.energy): 
-    print(str(K) + '-clique found:', sampleset.record[0][0])
+    print(str(K) + '-clique found:', state)
 else: 
     print('No '+ str(K) + '-clique found.')
 
 
+# Plot and save
+N0 = [i for i in G.nodes if not state[int(i)]]
+N1 = [i for i in G.nodes if state[int(i)]]
+E0 = [(i,j) for i,j in G.edges if state[int(i)] == 0 or state[int(j)] == 0]
+E1 = [(i,j) for i,j in G.edges if state[int(i)] == 1 and state[int(j)] == 1]
 
+pos = nx.spring_layout(G)
+nx.draw_networkx_nodes(G, pos, nodelist = N0, node_color='red')
+nx.draw_networkx_nodes(G, pos, nodelist = N1, node_color='blue')
+nx.draw_networkx_edges(G, pos, edgelist = E0, style='dashdot', alpha=0.5, width=3)
+nx.draw_networkx_edges(G, pos, edgelist = E1, style='solid', width=3)
+nx.draw_networkx_labels(G, pos)
+
+filename = "K-clique.png"
+plt.savefig(filename, bbox_inches='tight')
