@@ -23,22 +23,58 @@ Things to do:
 import numpy as np
 import networkx as nx
 import dwave_networkx as dnx
+from collections import defaultdict
 from Functions import fileToNetwork, networkToFile
 from dwave.system.samplers import DWaveSampler
 from dwave.system.composites import EmbeddingComposite
 
 
+# Graph parameters
+K = 4 #Size of the clique we are searching
+G = fileToNetwork("graph1.txt")
+nv = nx.number_of_nodes(G)
 
-# Parameters 
-num_reads = 1
-gamma = 10
+# Quantum parameters 
+num_reads = 10
+gamma = K + 1
+chain_strength = 10
+
+# Initialize matrix and fill in appropiate values
+Q = defaultdict(int)
+
+for j in range(nv):
+    Q[(j,j)] += gamma*(1-2*K)
+    for i in range(j):
+        Q[(i,j)] += 2*gamma
+
+for i,j in G.edges:
+    Q[(int(i),int(j))] -= 1
+
+constant = gamma*K*K + K*(K-1)/2
 
 
 
+# Run the QUBO
+sampler = EmbeddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
+sampleset = sampler.sample_qubo(Q,
+                                chain_strength=chain_strength,
+                                num_reads=num_reads,
+                                label='Test - Clique Problem')
 
-sampler = EmbedddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
-sampleset = sampler.sample_qubo(Q)
+print(sampleset.to_pandas_dataframe())
+print(' ')
+print('Energy: ' + str(constant + sampleset.first.energy))
+#print(sampleset.data)
+#print(sampleset.info)
+#print(sampleset.first)
 
+
+
+# Check if the best solution found is actually a K-clique
+if (constant == -sampleset.first.energy): 
+    print(str(K) + '-clique found:', sampleset.record[0][0])
+else: 
+    print('No '+ str(K) + '-clique found.')
 
 
 

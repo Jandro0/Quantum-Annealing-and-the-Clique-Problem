@@ -5,7 +5,7 @@ import numpy as np
 import scipy.integrate
 from matplotlib import colors
 import matplotlib.pyplot as plt
-from graph_things import graph, createGraph, networkToGraph
+from graph_things import graph, createGraph, networkToGraph, fileToNetwork, networkToFile
 from evolution import evolutionCN, evolutionCN2, evolutionCN3, evolutionCN4, evolutionCN5, evolutionCN6
 from evolution import evolutionABCN2, evolutionABCN3, evolutionABCN4, evolutionABCN5, evolutionABCN6
 from evolution import adiabaticEvolution, adiabaticEvolutionAB

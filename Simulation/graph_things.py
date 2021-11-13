@@ -168,7 +168,7 @@ def createGraph (nameIn):
 
 
 # Read a text file and create a network
-def createNetwork (nameIn):
+def fileToNetwork (nameIn):
     network = nx.Graph()
     
     with open(nameIn) as file: 
@@ -228,3 +228,20 @@ def plus1 (number):
     while (n < len(number)):
         number[n] = 0
         n += 1
+        
+        
+        
+        
+        
+networkG = nx.fast_gnp_random_graph(20, 0.6)
+networkToFile(networkG, "graph4.txt")
+print(nx.graph_clique_number(networkG))
+
+
+
+
+
+
+
+
+
