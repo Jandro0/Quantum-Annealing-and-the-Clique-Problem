@@ -34,16 +34,19 @@ K = 4 #Size of the clique we are searching
 G = fileToNetwork("graph1.txt")
 nv = nx.number_of_nodes(G)
 
-<<<<<<< HEAD
+
 # Quantum parameters 
 num_reads = 10
 gamma = K + 1
 chain_strength = 10
-=======
+
+
+
 # Parameters 
 num_reads = 1
 gamma = 80
->>>>>>> 97ee482e6008691fd47a82c37ab3654a9f9761d0
+
+
 
 # Initialize matrix and fill in appropiate values
 Q = defaultdict(int)
@@ -56,12 +59,8 @@ for j in range(nv):
 for i,j in G.edges:
     Q[(int(i),int(j))] -= 1
 
-<<<<<<< HEAD
+
 constant = gamma*K*K + K*(K-1)/2
-=======
-#sampler = EmbedddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
-#sampleset = sampler.sample_qubo(Q)
->>>>>>> 97ee482e6008691fd47a82c37ab3654a9f9761d0
 
 
 
