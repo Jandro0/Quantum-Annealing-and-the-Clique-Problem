@@ -33,49 +33,50 @@ from dwave.system.composites import EmbeddingComposite
 
 
 # Graph parameters
-K = 4 #Size of the clique we are searching
-G = fileToNetwork("graph1.txt")
+K = 3 #Size of the clique we are searching
+G = fileToNetwork("graph2.txt")
 nv = nx.number_of_nodes(G)
+ne = nx.number_of_edges(G)
 
 
 # Quantum parameters 
 num_reads = 10
-B = 1
-gamma = (K + 1)*B
+B = 1.
+A = (K + 1)*B
 chain_strength = 150
 
 
 
 # Initialize matrix and fill in appropiate values
-Q = defaultdict(int)
+h = defaultdict(int)
+for i in range(nv):
+    h[(i)] = A*(2*K-nv)/2. + B*len(G[i])/4.
 
-for j in range(nv):
-    Q[(j,j)] += gamma*(1-2*K)
-    for i in range(j):
-        Q[(i,j)] += 2*gamma
+J = defaultdict(int)
+for i in range(nv):
+    for j in range(i):
+        J[(i,j)] = A/2.
+    for j in G.neighbors(i):
+        if (i > j):
+            J[(i,j)] -= B/4.
 
-for i,j in G.edges:
-    Q[(int(i),int(j))] -= B
-
-
-constant = gamma*K*K + B*K*(K-1)/2
-
+constant = A*K*K + (B*K*(K-1) - A*(2*K-1)*nv)/2. + (A*nv*(nv-1) - B*ne)/4.
 
 
-# Run the QUBO with the desired sampler
+# Run the annealing with the desired sampler
 select = 0
 if (select == 0):
     sampler = EmbeddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
-    sampleset = sampler.sample_qubo(Q,
+    sampleset = sampler.sample_ising(h, J,
                                     chain_strength=chain_strength,
                                     num_reads=num_reads,
                                     label='Test - Clique Problem')
 elif (select == 1):
     sampler = LeapHybridSampler()
-    sampleset = sampler.sample_qubo(Q)
+    sampleset = sampler.sample_ising(h, J)
 elif (select == 2):
     sampler = LeapHybridBQMSampler()
-    sampleset = sampler.sample_qubo(Q)
+    sampleset = sampler.sample_ising(h, J)
 
 
 # Print results
@@ -97,10 +98,10 @@ else:
 
 
 # Plot and save
-N0 = [i for i in G.nodes if not state[int(i)]]
-N1 = [i for i in G.nodes if state[int(i)]]
-E0 = [(i,j) for i,j in G.edges if state[int(i)] == 0 or state[int(j)] == 0]
-E1 = [(i,j) for i,j in G.edges if state[int(i)] == 1 and state[int(j)] == 1]
+N0 = [i for i in G.nodes if state[i] == 1]
+N1 = [i for i in G.nodes if state[i] == -1]
+E0 = [(i,j) for i,j in G.edges if (state[i] == 1 or state[j] == 1)]
+E1 = [(i,j) for i,j in G.edges if (state[i] == -1 and state[j] == -1)]
 
 pos = nx.spring_layout(G)
 nx.draw_networkx_nodes(G, pos, nodelist = N0, node_color='red')
