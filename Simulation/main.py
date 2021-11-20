@@ -6,7 +6,7 @@ import scipy.integrate
 from matplotlib import colors
 import matplotlib.pyplot as plt
 from graph_things import graph, createGraph, networkToGraph, fileToNetwork, networkToFile
-from evolution import evolutionCN, evolutionCN2, evolutionCN3, evolutionCN4, evolutionCN5, evolutionCN6
+from evolution import evolutionCN2, evolutionCN3, evolutionCN4, evolutionCN5, evolutionCN6
 from evolution import evolutionABCN2, evolutionABCN3, evolutionABCN4, evolutionABCN5, evolutionABCN6
 from evolution import adiabaticEvolution, adiabaticEvolutionAB
 from evolution import evolutionRK2, evolutionRK3, evolutionRK4, evolutionRK5, evolutionRK6
@@ -242,7 +242,7 @@ from evolution import evolutionABRK62, evolutionABRK22
 # iterations = int(t_f/delta_t)
 # gs = groundState(dim, H)
 # H1 = makeFinalHamiltonian(dim, H)
-# H0 = makeInitialHamiltonian(len(G.vertex))
+# H0 = makeInitialHamiltonian(len(G.adjacency))
 # psi = np.ones(dim, dtype = complex)
 # overlap = [np.empty(0)]
 
@@ -277,22 +277,25 @@ from evolution import evolutionABRK62, evolutionABRK22
 
 #---------------------------NP-complete problem-------------------------------#
 #Create graph
-networkG = nx.fast_gnp_random_graph(5, 0.6)
-G = networkToGraph(networkG)
-H = graph.makeHamiltonian(G, 3, 10, 1)
-
+G = createGraph("graph2.txt")
+networkG = graph.toNetwork(G)
 
 
 #Create Hamiltonian matrices and initial state
+c = [0]
+K = 3
+beta = 1.
+alpha = (K + 1)*beta
+H = graph.makeIsingHamiltonian(G, K, alpha, beta, c)
 dim = len(H)
-t_f = 10
+t_f = 10.
 delta_t = 0.01
 number_of_eigenstates = 4
 number_of_overlaps = 50
 iterations = int(t_f/delta_t)
 gs = groundState(dim, H)
 H1 = makeFinalHamiltonian(dim, H)
-H0 = makeInitialHamiltonian(len(G.vertex))
+H0 = makeInitialHamiltonian(len(G.adjacency))
 successProbabilityRK = [np.empty(0)]
 successProbabilityRK3 = [np.empty(0)]
 successProbabilityRK6 = [np.empty(0)]
@@ -302,34 +305,33 @@ adiabatic = [np.empty(0)]
 energy = [np.empty([number_of_eigenstates, number_of_overlaps])]
 overlap = [np.empty([number_of_eigenstates, number_of_overlaps])]
 overlap1 = [np.empty(0)]
-
-
+A, B = fun.schedule("DW_2000Q_6.txt")
 
 
 #Make evolution
-adiabaticEvolutionAB(dim, H0, H1, fun.linearA, fun.linearB, adiabatic, gs, t_f, delta_t)
+adiabaticEvolutionAB(dim, H0, H1, A, B, adiabatic, gs, t_f, delta_t)
 
 psi = np.ones(dim, dtype = complex)
 initialT = time.time()
-psi = evolutionABRK2(dim, H0, H1, psi, fun.linearA, fun.linearB, successProbabilityRK, gs, t_f, delta_t)
+psi = evolutionABRK2(dim, H0, H1, psi, A, B, successProbabilityRK, gs, t_f, delta_t)
 finalT = time.time()
 print("RK4: " + str(finalT - initialT))
 
 psi = np.ones(dim, dtype = complex)
 initialT = time.time()
-psi = evolutionABCN2(dim, H0, H1, psi, fun.linearA, fun.linearB, successProbabilityCN, gs, t_f, delta_t)
+psi = evolutionABCN2(dim, H0, H1, psi, A, B, successProbabilityCN, gs, t_f, delta_t)
 finalT = time.time()
 print("CN: " + str(finalT - initialT))
 
 psi = np.ones(dim, dtype = complex)
 initialT = time.time()
-psi = evolutionABRK22(dim, H0, H1, psi, fun.linearA, fun.linearB, successProbabilityRK3, gs, t_f, delta_t)
+psi = evolutionABRK22(dim, H0, H1, psi, A, B, successProbabilityRK3, gs, t_f, delta_t)
 finalT = time.time()
 print("RK3: " + str(finalT - initialT))
 
 psi = np.ones(dim, dtype = complex)
 initialT = time.time()
-psi = evolutionABRK62(dim, H0, H1, psi, fun.linearA, fun.linearB, successProbabilityRK6, gs, t_f, delta_t)
+psi = evolutionABRK62(dim, H0, H1, psi, A, B, successProbabilityRK6, gs, t_f, delta_t)
 finalT = time.time()
 print("RK6: " + str(finalT - initialT))
 
@@ -338,8 +340,8 @@ t = np.linspace(0, t_f, int(t_f/delta_t))
 iteration = 0
 initialT = time.time()
 r = scipy.integrate.ode(fun.f).set_integrator('zvode', method='bdf', with_jacobian=False)
-r.set_initial_value(psi, 0).set_f_params(H0, H1, fun.linearA, fun.linearB, t_f)
-while r.successful() and r.t < t_f:
+r.set_initial_value(psi, 0).set_f_params(H0, H1, A, B, t_f)
+while r.successful() and r.t < t_f - 2*delta_t:
     psi_t = r.integrate(r.t + delta_t)
     
     if (iteration%30 == 0):
@@ -352,10 +354,10 @@ finalT = time.time()
 print("ODE: " + str(finalT - initialT))
 
 psi = np.ones(dim, dtype = complex)
-psi = evolutionABRK6(dim, H0, H1, psi, fun.linearA, fun.linearB, energy, overlap, t_f, delta_t, number_of_overlaps, number_of_eigenstates)
+psi = evolutionABRK6(dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, number_of_overlaps, number_of_eigenstates)
 
 psi = np.ones(dim, dtype = complex)
-psi = evolutionABRK5(dim, H0, H1, psi, fun.linearA, fun.linearB, overlap1, gs, t_f, delta_t)
+psi = evolutionABRK5(dim, H0, H1, psi, A, B, overlap1, gs, t_f, delta_t)
 
 
 # Probabilities
@@ -390,9 +392,10 @@ plt.ylim([0,1])
 plt.plot(xAxis2a, successProbabilityRK[0], 0.1, color = 'blue')
 plt.plot(xAxis2c, successProbabilityCN[0], 0.1, color = 'red')
 plt.plot(xAxis2d, successProbabilityRK3[0], 0.1, color = 'orange')
-plt.plot(xAxis2e, successProbabilityRK6[0], 0.1, color = 'black')
-plt.plot(xAxis2f, successProbabilityODE[0], 0.1, color = 'yellow')
+plt.plot(xAxis2e, successProbabilityRK6[0], 0.1, color = 'cyan')
+plt.plot(xAxis2f, successProbabilityODE[0], 0.1, color = 'black')
 plt.plot(xAxis2b, adiabatic[0], 0.1, color = 'green')
+
 
 
 plot3 = plt.figure(3)
@@ -429,9 +432,9 @@ plot5 = plt.figure(5)
 plt.xlim(1, 0)
 for i in range(number_of_bands):
     plt.plot(gamma, energies[i], 1)
-plt.show()
 
 
+plot6 = plt.figure(6)
 xAxis6 = np.linspace(0, t_f, len(overlap1[0]))
 plot6 = plt.figure(6)
 plt.xlim([0,t_f])
@@ -439,8 +442,15 @@ plt.ylim([0,1])
 plt.plot(xAxis6, overlap1[0], 0.1)
 
 
+plot7 = plt.figure(7)
+xAxis7 = np.linspace(0, t_f, 1000)
+plotA = A(xAxis7/t_f)
+plotB = B(xAxis7/t_f)
+plt.xlim([0,t_f])
+plt.plot(xAxis7, plotA)
+plt.plot(xAxis7, plotB)
 
-
+plt.show()
 
 # # Plot spectra over time (Gamma case)
 # gammaMax = 100
@@ -540,7 +550,7 @@ plt.plot(xAxis6, overlap1[0], 0.1)
 # iterations = int(t_f/delta_t)
 # gs = groundState(dim, H)
 # H1 = makeFinalHamiltonian(dim, H)
-# H0 = makeInitialHamiltonian(len(G.vertex) + int(np.floor(np.log2(len(G.vertex)))) + 1)
+# H0 = makeInitialHamiltonian(len(G.adjacency) + int(np.floor(np.log2(len(G.adjacency)))) + 1)
 # psi = np.ones(dim, dtype = complex)
 # successProbability = [np.zeros(iterations + 1)]
 

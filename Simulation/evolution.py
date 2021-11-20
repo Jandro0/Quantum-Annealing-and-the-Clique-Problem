@@ -74,16 +74,6 @@ def matrixTensor(A, B):
     
     
 #-------------------Evolutions with Gamma (Crank-Nicolson)-----------------------#
-# Simulate a linear evolution (currently not used)
-def evolutionCN (dim, H0, H1, psi, N, delta_t):    
-    for k in range(N):
-        H = complex(k/N) * H1 + (1 - complex(k/N)) * H0
-        psi = timeplus1(dim, H, psi, delta_t)
-        
-    return psi
-    
-    
-    
 # Simulate the evolution and plot probability coeffiecients over time
 def evolutionCN2 (dim, H0, H1, psi, Gamma, successProbability, gs, t_f, delta_t):
     t = 0
@@ -264,7 +254,7 @@ def evolutionCN6 (dim, H0, H1, psi, Gamma, energy, overlap, t_f, delta_t, number
 #-------------------Evolutions with A(t), B(t) (Crank-Nicolson)-------------------#
 # Simulate the evolution and plot probability coeffiecients over time
 def evolutionABCN2 (dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t):
-    t = 0
+    t = 0.
     iteration = 0
     probability = np.empty(dim)
     xAxis = np.linspace(0, dim - 1, dim)
@@ -278,7 +268,7 @@ def evolutionABCN2 (dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t
     plot = plt.figure()
     
     while (t < t_f): 
-        H = A(t, t_f)*H0 + B(t, t_f)*H1
+        H = A(t/t_f)*H0 + B(t/t_f)*H1
         psi = timeplus1(dim, H, psi, delta_t)
         t += delta_t
         iteration += 1
@@ -318,7 +308,7 @@ def evolutionABCN3 (dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t
     successProbability[0][0] = successProbability[0][0]/float(dim)    
 
     while (t < t_f): 
-        H = A(t, t_f)*H0 + B(t, t_f)*H1
+        H = A(t/t_f)*H0 + B(t/t_f)*H1
         psi = timeplus1(dim, H, psi, delta_t)
         t += delta_t
         iteration += 1
@@ -346,7 +336,7 @@ def evolutionABCN4 (dim, H0, H1, psi, A, B, successProbability, pSuccess, gs, t_
 
     
     while (successProbability[0][iteration] < pSuccess): 
-        H = A(t, t_f)*H0 + B(t, t_f)*H1
+        H = A(t/t_f)*H0 + B(t/t_f)*H1
         psi = timeplus1(dim, H, psi, delta_t)
         t += delta_t
         iteration += 1
@@ -368,7 +358,7 @@ def evolutionABCN5 (dim, H0, H1, psi, A, B, overlap, gs, t_f, delta_t):
     t = 0
     degeneracy = len(gs)
 
-    w, v = np.linalg.eigh(A(t, t_f)*H0 + B(t, t_f)*H1)
+    w, v = np.linalg.eigh(A(t/t_f)*H0 + B(t/t_f)*H1)
     prod = 0
     for i in range(degeneracy):
         vec = np.conjugate(v[:,i])
@@ -379,7 +369,7 @@ def evolutionABCN5 (dim, H0, H1, psi, A, B, overlap, gs, t_f, delta_t):
     
     
     while (t < t_f): 
-        H = A(t, t_f)*H0 + B(t, t_f)*H1
+        H = A(t/t_f)*H0 + B(t/t_f)*H1
         psi = timeplus1(dim, H, psi, delta_t)
         t += delta_t
         
@@ -405,7 +395,7 @@ def evolutionABCN6 (dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, numbe
     i = 0
     
     
-    H = A(t, t_f)*H0 + B(t, t_f)*H1
+    H = A(t/t_f)*H0 + B(t/t_f)*H1
     w, v = np.linalg.eigh(H)
     for k in range(number_of_eigenstates):
         vec = np.conjugate(v[:,k])
@@ -415,7 +405,7 @@ def evolutionABCN6 (dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, numbe
         
         
     while (t < t_f): 
-        H = A(t, t_f)*H0 + B(t, t_f)*H1
+        H = A(t/t_f)*H0 + B(t/t_f)*H1
         psi = timeplus1(dim, H, psi, delta_t)
         t += delta_t
         t_for_overlap += 1
@@ -648,11 +638,11 @@ def evolutionABRK2 (dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t
 
     plot = plt.figure()
     
-    while (t < t_f): 
-        k1 = (0. - 1.j)*np.matmul(A(t, t_f)*H0 + B(t, t_f)*H1, psi)
-        k2 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(A(t + float(delta_t), t_f)*H0 + B(t + float(delta_t), t_f)*H1, psi + float(delta_t)*k3)
+    while (t < t_f - delta_t): 
+        k1 = (0. - 1.j)*np.matmul(A(t/t_f)*H0 + B(t/t_f)*H1, psi)
+        k2 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k1)
+        k3 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k2)
+        k4 = (0. - 1.j)*np.matmul(A((t + delta_t)/ t_f)*H0 + B((t + delta_t)/ t_f)*H1, psi + delta_t * k3)
         psi = psi + float(1/6)*delta_t*(k1 + 2*k2 + 2*k3 + k4)
         t += delta_t
         iteration += 1
@@ -692,11 +682,11 @@ def evolutionABRK3 (dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t
     
     successProbability[0][0] = successProbability[0][0]/float(dim)    
 
-    while (t < t_f): 
-        k1 = (0. - 1.j)*np.matmul(A(t, t_f)*H0 + B(t, t_f)*H1, psi)
-        k2 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(A(t + float(delta_t), t_f)*H0 + B(t + float(delta_t), t_f)*H1, psi + float(delta_t)*k3)
+    while (t < t_f - delta_t): 
+        k1 = (0. - 1.j)*np.matmul(A(t/t_f)*H0 + B(t/t_f)*H1, psi)
+        k2 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k1)
+        k3 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k2)
+        k4 = (0. - 1.j)*np.matmul(A((t + delta_t)/ t_f)*H0 + B((t + delta_t)/ t_f)*H1, psi + delta_t * k3)
         psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
         t += delta_t
         iteration += 1
@@ -723,11 +713,11 @@ def evolutionABRK4 (dim, H0, H1, psi, A, B, successProbability, pSuccess, gs, t_
     successProbability[0][0] = successProbability[0][0]/float(dim)
 
     
-    while (successProbability[0][iteration] < pSuccess): 
-        k1 = (0. - 1.j)*np.matmul(A(t, t_f)*H0 + B(t, t_f)*H1, psi)
-        k2 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(A(t + float(delta_t), t_f)*H0 + B(t + float(delta_t), t_f)*H1, psi + float(delta_t)*k3)
+    while (t < t_f - delta_t): 
+        k1 = (0. - 1.j)*np.matmul(A(t/t_f)*H0 + B(t/t_f)*H1, psi)
+        k2 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k1)
+        k3 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k2)
+        k4 = (0. - 1.j)*np.matmul(A((t + delta_t)/ t_f)*H0 + B((t + delta_t)/ t_f)*H1, psi + delta_t * k3)
         psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
         t += delta_t
         iteration += 1
@@ -750,7 +740,7 @@ def evolutionABRK5 (dim, H0, H1, psi, A, B, overlap, gs, t_f, delta_t):
     degeneracy = len(gs)
     iteration = 0
 
-    w, v = np.linalg.eigh(A(t, t_f)*H0 + B(t, t_f)*H1)
+    w, v = np.linalg.eigh(A(t/t_f)*H0 + B(t/t_f)*H1)
     prod = 0
     for i in range(degeneracy):
         vec = np.conjugate(v[:,i])
@@ -760,13 +750,13 @@ def evolutionABRK5 (dim, H0, H1, psi, A, B, overlap, gs, t_f, delta_t):
     overlap[0] = np.append(overlap[0], prod)
     
     
-    while (t < t_f): 
+    while (t < t_f - delta_t): 
         iteration += 1
-        H = A(t, t_f)*H0 + B(t, t_f)*H1
-        k1 = (0. - 1.j)*np.matmul(A(t, t_f)*H0 + B(t, t_f)*H1, psi)
-        k2 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(A(t + float(delta_t), t_f)*H0 + B(t + float(delta_t), t_f)*H1, psi + float(delta_t)*k3)
+        H = A(t/t_f)*H0 + B(t/t_f)*H1
+        k1 = (0. - 1.j)*np.matmul(A(t/t_f)*H0 + B(t/t_f)*H1, psi)
+        k2 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k1)
+        k3 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k2)
+        k4 = (0. - 1.j)*np.matmul(A((t + delta_t)/ t_f)*H0 + B((t + delta_t)/ t_f)*H1, psi + delta_t * k3)
         psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
         t += delta_t
         
@@ -793,7 +783,7 @@ def evolutionABRK6 (dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, numbe
     i = 0
     
     
-    H = A(t, t_f)*H0 + B(t, t_f)*H1
+    H = A(t/t_f)*H0 + B(t/t_f)*H1
     w, v = np.linalg.eigh(H)
     for k in range(number_of_eigenstates):
         vec = np.conjugate(v[:,k])
@@ -802,12 +792,12 @@ def evolutionABRK6 (dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, numbe
         energy[0][k][0] = w[k]
         
         
-    while (t < t_f): 
-        H = A(t, t_f)*H0 + B(t, t_f)*H1
-        k1 = (0. - 1.j)*np.matmul(A(t, t_f)*H0 + B(t, t_f)*H1, psi)
-        k2 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(A(t + float(delta_t/2), t_f)*H0 + B(t + float(delta_t/2), t_f)*H1, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(A(t + float(delta_t), t_f)*H0 + B(t + float(delta_t), t_f)*H1, psi + float(delta_t)*k3)
+    while (t < t_f - delta_t): 
+        H = A(t/t_f)*H0 + B(t/t_f)*H1
+        k1 = (0. - 1.j)*np.matmul(A(t/t_f)*H0 + B(t/t_f)*H1, psi)
+        k2 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k1)
+        k3 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/ t_f)*H0 + B((t + delta_t/2)/ t_f)*H1, psi + delta_t/2 * k2)
+        k4 = (0. - 1.j)*np.matmul(A((t + delta_t)/ t_f)*H0 + B((t + delta_t)/ t_f)*H1, psi + delta_t * k3)
         psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
         t += delta_t
         t_for_overlap += 1
@@ -824,6 +814,9 @@ def evolutionABRK6 (dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, numbe
         
         
     return psi
+
+
+
 
 
 
@@ -860,18 +853,18 @@ def adiabaticEvolutionAB (dim, H0, H1, A, B, adiabatic, gs, t_f, delta_t):
     t = 0
     iteration = 0
     
-    w, v = np.linalg.eigh(A(t, t_f)*H0 + B(t, t_f)*H1)
+    w, v = np.linalg.eigh(A(t/t_f)*H0 + B(t/t_f)*H1)
     vec = np.conjugate(v[:, 0])
     adiabatic[0] = np.append(adiabatic[0], 0.)
     for i in gs:
         adiabatic[0][iteration] += np.real(vec[i])*np.real(vec[i]) + np.imag(vec[i])*np.imag(vec[i])
     
-    while (t < t_f): 
+    while (t < t_f - delta_t): 
         t += delta_t
         iteration += 1
         
         if (iteration%10 == 0):
-            H = A(t, t_f)*H0 + B(t, t_f)*H1
+            H = A(t/t_f)*H0 + B(t/t_f)*H1
             w, v = np.linalg.eigh(H)
             vec = np.conjugate(v[:, 0])
             adiabatic[0] = np.append(adiabatic[0], 0.)
@@ -914,13 +907,13 @@ def evolutionABRK62 (dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_
 
     
     
-    while (t < t_f): 
-        k1 = (0. - 1.j)*np.matmul(A(t, t_f)*H0 + B(t, t_f)*H1, psi)*delta_t
-        k2 = (0. - 1.j)*np.matmul(A(t + delta_t/2, t_f)*H0 + B(t + delta_t/2, t_f)*H1, psi + k1/2)*delta_t
-        k3 = (0. - 1.j)*np.matmul(A(t + delta_t/2, t_f)*H0 + B(t + delta_t/2, t_f)*H1, psi + k1/4 + k2/4)*delta_t
-        k4 = (0. - 1.j)*np.matmul(A(t + delta_t, t_f)*H0 + B(t + delta_t, t_f)*H1, psi - k2 + 2*k3)*delta_t
-        k5 = (0. - 1.j)*np.matmul(A(t + 2*delta_t/3, t_f)*H0 + B(t + 2*delta_t/3, t_f)*H1, psi + 7*k1/27 + 10*k2/27 + 1*k4/27)*delta_t
-        k6 = (0. - 1.j)*np.matmul(A(t + delta_t/5, t_f)*H0 + B(t + delta_t/5, t_f)*H1, psi + 28*k1/625 - k2/5 + 546*k3/625 + 54*k4/625 - 378*k5/625)*delta_t     
+    while (t < t_f - delta_t): 
+        k1 = (0. - 1.j)*np.matmul(A(t/t_f)*H0 + B(t/t_f)*H1, psi)*delta_t
+        k2 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/t_f)*H0 + B((t + delta_t/2)/t_f)*H1, psi + k1/2)*delta_t
+        k3 = (0. - 1.j)*np.matmul(A((t + delta_t/2)/t_f)*H0 + B((t + delta_t/2)/t_f)*H1, psi + k1/4 + k2/4)*delta_t
+        k4 = (0. - 1.j)*np.matmul(A((t + delta_t)/t_f)*H0 + B((t + delta_t)/t_f)*H1, psi - k2 + 2*k3)*delta_t
+        k5 = (0. - 1.j)*np.matmul(A((t + 2*delta_t/3)/t_f)*H0 + B((t + 2*delta_t/3)/t_f)*H1, psi + 7*k1/27 + 10*k2/27 + 1*k4/27)*delta_t
+        k6 = (0. - 1.j)*np.matmul(A((t + delta_t/5)/t_f)*H0 + B((t + delta_t/5)/t_f)*H1, psi + 28*k1/625 - k2/5 + 546*k3/625 + 54*k4/625 - 378*k5/625)*delta_t     
         psi = psi + (k1/24 + 5*k4/48 + 27*k5/56 + 125*k6/336)
         t += delta_t
         iteration += 1
@@ -951,10 +944,10 @@ def evolutionABRK22 (dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_
 
     
     
-    while (t < t_f): 
-        k1 = (0. - 1.j)*np.matmul(A(t, t_f)*H0 + B(t, t_f)*H1, psi)
-        k2 = (0. - 1.j)*np.matmul(A(t + delta_t/3, t_f)*H0 + B(t + delta_t/3, t_f)*H1, psi + delta_t*k1/3)
-        k3 = (0. - 1.j)*np.matmul(A(t + 2*delta_t/3, t_f)*H0 + B(t + 2*delta_t/3, t_f)*H1, psi + 2*delta_t*k2/3)
+    while (t < t_f - delta_t): 
+        k1 = (0. - 1.j)*np.matmul(A(t/t_f)*H0 + B(t/t_f)*H1, psi)
+        k2 = (0. - 1.j)*np.matmul(A((t + delta_t/3)/t_f)*H0 + B((t + delta_t/3)/t_f)*H1, psi + delta_t*k1/3)
+        k3 = (0. - 1.j)*np.matmul(A((t + 2*delta_t/3)/t_f)*H0 + B((t + 2*delta_t/3)/t_f)*H1, psi + 2*delta_t*k2/3)
         psi = psi + delta_t*(k1 + 3*k3)/4
         t += delta_t
         iteration += 1

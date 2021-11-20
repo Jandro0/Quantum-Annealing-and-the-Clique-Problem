@@ -1,21 +1,21 @@
 import numpy as np
 import scipy.special
 import networkx as nx
-
+from collections import defaultdict
 
 
 class graph:
-    def __init__(self,  nv, ne, vertex):
+    def __init__(self,  nv, ne, adjacency):
         self.nv = nv
         self.ne = ne
-        self.vertex = vertex
+        self.adjacency = adjacency
         
     # Transform a graph to a graph in the networkx module        
     def toNetwork (self):
         network = nx.Graph()
         network.add_nodes_from(range(self.nv))
         for v in range(self.nv):
-            for u in self.vertex[v]:
+            for u in self.adjacency[v]:
                 if (v < u):
                     e = (v, u)
                     network.add_edge(*e)
@@ -24,6 +24,67 @@ class graph:
         return network
         
         
+        
+    # Create the Ising Hamiltonian as a vector in the NP-complete case
+    def makeIsingHamiltonian(self, K, A, B, c):
+        dim = pow(2, self.nv)
+        Hamiltonian = np.zeros(dim)
+        state = [1 for i in range(self.nv)]
+        
+        h = defaultdict(int)
+        for i in range(self.nv):
+            h[(i)] = A*(2*K-self.nv)/2. + B*len(self.adjacency[i])/4.
+        
+        J = defaultdict(int)
+        for i in range(self.nv):
+            for j in range(i):
+                J[(i,j)] = A/2.
+            for j in self.adjacency[i]:
+                if (i > j):
+                    J[(i,j)] -= B/4.
+        
+        c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
+                
+                
+        for k in range(dim):     
+            for i in range(self.nv):
+                Hamiltonian[k] += h[i]*state[i]
+                for j in range(i):
+                    Hamiltonian[k] += J[(i,j)]*state[i]*state[j]
+            
+            
+            nextIsing(state)
+        
+        
+        # bstate = [0 for i in range(self.nv)]
+        
+        # h = defaultdict(int)
+        # for i in range(self.nv):
+        #     h[(i)] = A*(1-2*K)
+        
+        # J = defaultdict(int)
+        # for i in range(self.nv):
+        #     for j in range(i):
+        #         J[(i,j)] = 4*A
+        #     for j in self.adjacency[i]:
+        #         if (i > j):
+        #             J[(i,j)] -= B
+        
+        # c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv + A*self.nv*(self.nv-1) - B*self.ne)/2.
+            
+        # for k in range(dim):     
+        #     for i in range(self.nv):
+        #         Hamiltonian[k] += h[i]*bstate[i]
+        #         for j in range(i):
+        #             Hamiltonian[k] += J[(i,j)]*bstate[i]*bstate[j]
+            
+        #     print(bstate)
+        #     plus1(bstate)
+            
+        
+        return Hamiltonian
+        
+    
         
     # Create the Hamiltionian as a vector in the NP-complete case
     def makeHamiltonian(self, K, A, B):
@@ -40,7 +101,7 @@ class graph:
             for v in range(self.nv):
                 sum1 += state[v]
                 if (state[v] == 1):
-                    for k in self.vertex[v]:
+                    for k in self.adjacency[v]:
                         sum2 += state[k]
                             
             Hamiltonian[i] = (A * pow(K - sum1, 2) + B * (K*(K-1) - sum2)/2) 
@@ -68,7 +129,7 @@ class graph:
             for v in range(self.nv):
                 sum1 += state[v]
                 if (state[v] == 1):
-                    for k in self.vertex[v]:
+                    for k in self.adjacency[v]:
                         sum2 += state[k]
             for k in range(M + 1):
                 sum3 += pow(2, M - k) * state[self.nv + k]            
@@ -99,7 +160,7 @@ class graph:
                 sum1 = 0 
                 for v in range(self.nv):
                     if (state[v] == 1):
-                        for k in self.vertex[v]:
+                        for k in self.adjacency[v]:
                             sum1 += state[k]
                                 
                 Hamiltonian[i] = B * (K*(K-1) - sum1)/2 
@@ -133,7 +194,7 @@ class graph:
                 sum1 = 0 
                 for v in range(self.nv):
                     if (state[v] == 1):
-                        for k in self.vertex[v]:
+                        for k in self.adjacency[v]:
                             sum1 += state[k]
                                 
                 Hamiltonian[i] = B * (size*(size-1) - sum1)/2 - C * number
@@ -230,19 +291,30 @@ def plus1 (number):
         n += 1
         
         
-        
-        
-        
-networkG = nx.fast_gnp_random_graph(20, 0.6)
-networkToFile(networkG, "graph4.txt")
-print(nx.graph_clique_number(networkG))
+# Next Ising state
+def nextIsing (state):
+    n = len(state) - 1
+    done = False
 
-for i, j in networkG.edges: 
-    print(i,j)
+    while not (done):
+        if (state[n] == 1):
+            done = True
+            break
+        n -= 1
+        if (n < 0): 
+            break
+    
+    state[n] = -1
+    n += 1
+    while (n < len(state)):
+        state[n] = 1
+        n += 1
+ 
 
-a = np.linspace(0, 1, 20)
-for i in networkG.nodes:
-    print(a[i])
 
 
-b = [i for i in networkG.nodes if a[i]]
+# networkG = nx.fast_gnp_random_graph(120, 0.6)
+# networkToFile(networkG, "graph4.txt")
+# print(nx.graph_clique_number(networkG))
+
+
