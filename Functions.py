@@ -25,3 +25,4 @@ def networkToFile (network, nameOut):
         file.write('\n')
         for e in list(network.edges):
             file.write(str(e[0]) + ' ' + str(e[1]) + '\n')
+
