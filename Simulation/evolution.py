@@ -824,52 +824,31 @@ def evolutionABRK6 (dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, numbe
 
 #Compute the overlap assuming adiabatic evolution
 def adiabaticEvolution (dim, H0, H1, Gamma, adiabatic, gs, t_f, delta_t):
-    t = 0
-    iteration = 0
-    
-    w, v = np.linalg.eigh(H1 + Gamma(t) * H0)
-    vec = np.conjugate(v[:, 0])
-    adiabatic[0] = np.append(adiabatic[0], 0.)
-    for i in gs:
-        adiabatic[0][iteration] += np.real(vec[i])*np.real(vec[i]) + np.imag(vec[i])*np.imag(vec[i])
-    
-    while (t < t_f): 
-        H = H1 + Gamma(t) * H0
-        t += delta_t
-        iteration += 1
-        
+    times = np.linspace(0, t_f, 100)
+       
+    for t in times:
+        H = Gamma(t)*H0 + H1
         w, v = np.linalg.eigh(H)
         vec = np.conjugate(v[:, 0])
         adiabatic[0] = np.append(adiabatic[0], 0.)
         for i in gs:
-            adiabatic[0][iteration] += np.real(vec[i])*np.real(vec[i]) + np.imag(vec[i])*np.imag(vec[i])
+            adiabatic[0][-1] += np.real(vec[i])*np.real(vec[i]) + np.imag(vec[i])*np.imag(vec[i])
 
 
 
 
 
 #Compute the overlap assuming adiabatic evolution
-def adiabaticEvolutionAB (dim, H0, H1, A, B, adiabatic, gs, t_f, delta_t):
-    t = 0
-    iteration = 0
-    
-    w, v = np.linalg.eigh(A(t/t_f)*H0 + B(t/t_f)*H1)
-    vec = np.conjugate(v[:, 0])
-    adiabatic[0] = np.append(adiabatic[0], 0.)
-    for i in gs:
-        adiabatic[0][iteration] += np.real(vec[i])*np.real(vec[i]) + np.imag(vec[i])*np.imag(vec[i])
-    
-    while (t < t_f - delta_t): 
-        t += delta_t
-        iteration += 1
-        
-        if (iteration%10 == 0):
-            H = A(t/t_f)*H0 + B(t/t_f)*H1
-            w, v = np.linalg.eigh(H)
-            vec = np.conjugate(v[:, 0])
-            adiabatic[0] = np.append(adiabatic[0], 0.)
-            for i in gs:
-                adiabatic[0][-1] += np.real(vec[i])*np.real(vec[i]) + np.imag(vec[i])*np.imag(vec[i])
+def adiabaticEvolutionAB (dim, H0, H1, A, B, adiabatic, gs, t_f):
+    times = np.linspace(0, t_f, 100)
+       
+    for t in times:
+        H = A(t/t_f)*H0 + B(t/t_f)*H1
+        w, v = np.linalg.eigh(H)
+        vec = np.conjugate(v[:, 0])
+        adiabatic[0] = np.append(adiabatic[0], 0.)
+        for i in gs:
+            adiabatic[0][-1] += np.real(vec[i])*np.real(vec[i]) + np.imag(vec[i])*np.imag(vec[i])
 
 
 

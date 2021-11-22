@@ -40,7 +40,12 @@ ne = nx.number_of_edges(G)
 
 
 # Quantum parameters 
-num_reads = 10
+min_annealing_time = 10
+max_annealing_time = 1000
+num_annealing_time = 25
+annealing_times = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=int)
+probability_of_success = np.empty((2, num_annealing_time))
+num_reads = 100
 B = 1.
 A = (K + 1)*B
 chain_strength = 150
@@ -64,51 +69,83 @@ constant = A*K*K + (B*K*(K-1) - A*(2*K-1)*nv)/2. + (A*nv*(nv-1) - B*ne)/4.
 
 
 # Run the annealing with the desired sampler
-select = 0
-if (select == 0):
-    sampler = EmbeddingComposite(DWaveSampler(solver={'topology__type': 'chimera'}))
-    sampleset = sampler.sample_ising(h, J,
-                                    chain_strength=chain_strength,
-                                    num_reads=num_reads,
-                                    label='Test - Clique Problem')
-elif (select == 1):
-    sampler = LeapHybridSampler()
-    sampleset = sampler.sample_ising(h, J)
-elif (select == 2):
-    sampler = LeapHybridBQMSampler()
-    sampleset = sampler.sample_ising(h, J)
+for i in range(num_annealing_time):
+    for select in [0, 1]:
+        if (select == 0):
+            qpu = DWaveSampler(solver={'topology__type': 'chimera'}, auto_scale=True)
+            sampler = EmbeddingComposite(qpu)
+            sampleset = sampler.sample_ising(h, J,
+                                            chain_strength=chain_strength,
+                                            num_reads=num_reads,
+                                            annealing_time=int(annealing_times[i]),
+                                            label='Test - Clique Problem')
+        elif (select == 1):
+            qpu = DWaveSampler(solver={'topology__type': 'pegasus'}, auto_scale=True)
+            sampler = EmbeddingComposite(qpu)
+            sampleset = sampler.sample_ising(h, J,
+                                            chain_strength=chain_strength,
+                                            num_reads=num_reads,
+                                            annealing_time=int(annealing_times[i]),
+                                            label='Test - Clique Problem')
+        elif (select == 2):
+            sampler = LeapHybridSampler()
+            sampleset = sampler.sample_ising(h, J)
+        elif (select == 3):
+            sampler = LeapHybridBQMSampler()
+            sampleset = sampler.sample_ising(h, J)
 
 
-# Print results
-print(sampleset.to_pandas_dataframe())
-print(' ')
-print('Energy: ' + str(constant + sampleset.first.energy))
-#print(sampleset.data)
-#print(sampleset.info)
-#print(sampleset.first)
+        # Print results
+        if (select == 0):
+            print("-------------------------DW_2000Q_6-------------------------")
+        elif (select == 1):
+            print("--------------------Adavantage_system4.1--------------------")
+        print(sampleset.to_pandas_dataframe())
+        print(' ')
+        print('Energy: ' + str(constant + sampleset.first.energy))
+        #print(sampleset.data)
+        #print(sampleset.info)
+        #print(sampleset.first)
 
 
 
-# Check if the best solution found is actually a K-clique
-state = sampleset.record[0][0]
-if (constant == -sampleset.first.energy): 
-    print(str(K) + '-clique found:', state)
-else: 
-    print('No '+ str(K) + '-clique found.')
+        # Check if the best solution found is actually a K-clique and print results
+        state = sampleset.record[0][0]
+        if (constant == -sampleset.first.energy): 
+            print(str(K) + '-clique found with annealing_time = ' + str(annealing_times[i]) + ':', state, '\n\n')
+
+            groundStateSet = sampleset.lowest(atol=0.1)
+            probability_of_success[select][i] = float(np.sum(groundStateSet.record.num_occurrences))/float(num_reads)
+
+        else: 
+            print('No '+ str(K) + '-clique found with annealing_time = ' + str(annealing_times[i]) + '\n\n')
+            probability_of_success[select][i] = 0.0
 
 
-# Plot and save
-N0 = [i for i in G.nodes if state[i] == 1]
-N1 = [i for i in G.nodes if state[i] == -1]
-E0 = [(i,j) for i,j in G.edges if (state[i] == 1 or state[j] == 1)]
-E1 = [(i,j) for i,j in G.edges if (state[i] == -1 and state[j] == -1)]
+        # Plot and save
+        N0 = [i for i in G.nodes if state[i] == 1]
+        N1 = [i for i in G.nodes if state[i] == -1]
+        E0 = [(i,j) for i,j in G.edges if (state[i] == 1 or state[j] == 1)]
+        E1 = [(i,j) for i,j in G.edges if (state[i] == -1 and state[j] == -1)]
 
-pos = nx.spring_layout(G)
-nx.draw_networkx_nodes(G, pos, nodelist = N0, node_color='red')
-nx.draw_networkx_nodes(G, pos, nodelist = N1, node_color='blue')
-nx.draw_networkx_edges(G, pos, edgelist = E0, style='dashdot', alpha=0.5, width=3)
-nx.draw_networkx_edges(G, pos, edgelist = E1, style='solid', width=3)
-nx.draw_networkx_labels(G, pos)
+        plt.figure()
+        pos = nx.spring_layout(G)
+        nx.draw_networkx_nodes(G, pos, nodelist = N0, node_color='red')
+        nx.draw_networkx_nodes(G, pos, nodelist = N1, node_color='blue')
+        nx.draw_networkx_edges(G, pos, edgelist = E0, style='dashdot', alpha=0.5, width=3)
+        nx.draw_networkx_edges(G, pos, edgelist = E1, style='solid', width=3)
+        nx.draw_networkx_labels(G, pos)
 
-filename = "K-clique.png"
+        filename = "K-clique " + "(QPU: " + str(select) + ").png"
+        plt.savefig(filename, bbox_inches='tight')
+
+
+plt.figure()
+xAxis = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=int)
+plt.xlabel("Annealing time (microseconds)")
+plt.ylabel("Probability of success")
+plt.plot(xAxis, probability_of_success[0], color='blue', label='DW_6000Q_6')
+plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4.1')
+plt.legend(loc='best')
+filename = "Probabilty of success for different annealing times.png"
 plt.savefig(filename, bbox_inches='tight')

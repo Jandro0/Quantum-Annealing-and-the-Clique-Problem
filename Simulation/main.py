@@ -5,7 +5,7 @@ import numpy as np
 import scipy.integrate
 from matplotlib import colors
 import matplotlib.pyplot as plt
-from graph_things import graph, createGraph, networkToGraph, fileToNetwork, networkToFile
+from graph_things import graph, createGraph, networkToGraph, fileToNetwork, networkToFile, decimalToBinary
 from evolution import evolutionCN2, evolutionCN3, evolutionCN4, evolutionCN5, evolutionCN6
 from evolution import evolutionABCN2, evolutionABCN3, evolutionABCN4, evolutionABCN5, evolutionABCN6
 from evolution import adiabaticEvolution, adiabaticEvolutionAB
@@ -276,19 +276,251 @@ from evolution import evolutionABRK62, evolutionABRK22
 
 
 #---------------------------NP-complete problem-------------------------------#
+# nv_min = 3  #Minimum number of vertices
+# nv_max = 9 #Maximum number of vertices
+# p = 0.7  #Probability that there is an edge joining two vertices
+# t_f = 5.0  #Time of the evolution
+# delta_t = 0.01  #Step in the Crank-Nicolson/Runge-Kutta algorithm
+# number_of_experiments = 5  #Number of simulations for each size
+# simulation_times = np.empty((5, number_of_experiments))  #Probabilities of success at a given time
+# meanTime = np.empty((5, nv_max - nv_min + 1))  #Mean probabilities for each size
+# deviationTime = np.empty((5, nv_max - nv_min + 1))  #Standard deviation of the probabilities for each size
+
+# for nv in range(nv_min, nv_max + 1):
+#     for experiment in range(number_of_experiments):
+#         #Create graph
+#         networkG = nx.fast_gnp_random_graph(nv, p)
+#         G = networkToGraph(networkG)
+        
+        
+#         #Create Hamiltonian matrices and initial state
+#         c = [0]
+#         K = nx.graph_clique_number(networkG)
+#         beta = 1.0
+#         alpha = (K + 1)*beta
+#         H = graph.makeIsingHamiltonian(G, K, alpha, beta, c)
+#         dim = len(H)
+#         t_f = 5.0
+#         delta_t = 0.01
+#         number_of_eigenstates = 4
+#         number_of_overlaps = 50
+#         iterations = int(t_f/delta_t)
+#         gs = groundState(dim, H)
+#         H1 = makeFinalHamiltonian(dim, H)
+#         H0 = makeInitialHamiltonian(len(G.adjacency))
+#         successProbabilityRK = [np.empty(0)]
+#         successProbabilityRK3 = [np.empty(0)]
+#         successProbabilityRK6 = [np.empty(0)]
+#         successProbabilityCN = [np.empty(0)]
+#         successProbabilityODE = [np.empty(0)]
+#         adiabatic = [np.empty(0)]
+#         energy = [np.empty([number_of_eigenstates, number_of_overlaps])]
+#         overlap = [np.empty([number_of_eigenstates, number_of_overlaps])]
+#         overlap1 = [np.empty(0)]
+#         A = fun.linearA
+#         B = fun.linearB
+        
+        
+#         #Make evolution
+#         adiabaticEvolutionAB(dim, H0, H1, A, B, adiabatic, gs, t_f)
+        
+#         psi = np.ones(dim, dtype = complex)
+#         initialT = time.time()
+#         psi = evolutionABRK2(dim, H0, H1, psi, A, B, successProbabilityRK, gs, t_f, delta_t)
+#         finalT = time.time()
+#         simulation_times[0][experiment] = finalT - initialT
+        
+#         psi = np.ones(dim, dtype = complex)
+#         initialT = time.time()
+#         psi = evolutionABCN2(dim, H0, H1, psi, A, B, successProbabilityCN, gs, t_f, delta_t)
+#         finalT = time.time()
+#         simulation_times[1][experiment] = finalT - initialT
+        
+#         psi = np.ones(dim, dtype = complex)
+#         initialT = time.time()
+#         psi = evolutionABRK22(dim, H0, H1, psi, A, B, successProbabilityRK3, gs, t_f, delta_t)
+#         finalT = time.time()
+#         simulation_times[2][experiment] = finalT - initialT
+        
+#         psi = np.ones(dim, dtype = complex)
+#         initialT = time.time()
+#         psi = evolutionABRK62(dim, H0, H1, psi, A, B, successProbabilityRK6, gs, t_f, delta_t)
+#         finalT = time.time()
+#         simulation_times[3][experiment] = finalT - initialT
+        
+#         psi = np.ones(dim, dtype = complex)
+#         t = np.linspace(0, t_f, int(t_f/delta_t))
+#         iteration = 0
+#         initialT = time.time()
+#         r = scipy.integrate.ode(fun.f).set_integrator('zvode', method='bdf', with_jacobian=False)
+#         r.set_initial_value(psi, 0).set_f_params(H0, H1, A, B, t_f)
+#         while r.successful() and r.t < t_f - 2*delta_t:
+#             psi_t = r.integrate(r.t + delta_t)
+            
+#             if (iteration%30 == 0):
+#                 successProbabilityODE[0] = np.append(successProbabilityODE[0], 0.)
+#                 for i in gs:
+#                     successProbabilityODE[0][-1] += np.real(psi_t[i])*np.real(psi_t[i]) + np.imag(psi_t[i])*np.imag(psi_t[i])
+               
+#                 successProbabilityODE[0][-1] = successProbabilityODE[0][-1]/float(dim)
+#         finalT = time.time()
+#         simulation_times[4][experiment] = finalT - initialT
+        
+#         psi = np.ones(dim, dtype = complex)
+#         psi = evolutionABRK6(dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, number_of_overlaps, number_of_eigenstates)
+        
+#         psi = np.ones(dim, dtype = complex)
+#         psi = evolutionABRK5(dim, H0, H1, psi, A, B, overlap1, gs, t_f, delta_t)
+        
+        
+#         # Probabilities
+#         probability = np.empty(dim)
+#         for k in range(dim):
+#             probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
+#         probability = probability / float(dim)
+        
+        
+        
+#         probability =  np.amax(H)*probability
+#         xAxis1 = np.linspace(0, dim - 1,  dim)
+#         xAxis2a = np.linspace(0, t_f, len(successProbabilityRK[0]))
+#         xAxis2b = np.linspace(0, t_f, len(adiabatic[0]))
+#         xAxis2c = np.linspace(0, t_f, len(successProbabilityCN[0]))
+#         xAxis2d = np.linspace(0, t_f, len(successProbabilityRK3[0]))
+#         xAxis2e = np.linspace(0, t_f, len(successProbabilityRK6[0]))
+#         xAxis2f = np.linspace(0, t_f, len(successProbabilityODE[0]))
+#         xAxis3 = np.linspace(0, t_f, number_of_overlaps)
+        
+        
+        
+        
+#         # Draw stuff
+#         plot1 = plt.figure(1)
+#         plt.plot(xAxis1, H)
+#         plt.plot(xAxis1, probability)
+        
+#         plot2 = plt.figure(2)
+#         plt.xlim([0,t_f])
+#         plt.ylim([0,1])
+#         plt.plot(xAxis2a, successProbabilityRK[0], 0.1, color = 'blue')
+#         plt.plot(xAxis2c, successProbabilityCN[0], 0.1, color = 'red')
+#         plt.plot(xAxis2d, successProbabilityRK3[0], 0.1, color = 'orange')
+#         plt.plot(xAxis2e, successProbabilityRK6[0], 0.1, color = 'cyan')
+#         plt.plot(xAxis2f, successProbabilityODE[0], 0.1, color = 'black')
+#         plt.plot(xAxis2b, adiabatic[0], 0.1, color = 'green')
+        
+        
+        
+#         plot3 = plt.figure(3)
+#         plt.xlim(0, t_f)
+#         # for i in range(number_of_eigenstates):
+#         #     plt.plot(xAxis3, energy[0][i])
+#         for i in range(number_of_eigenstates):
+#             plt.scatter(xAxis3, energy[0][i], s = 100*overlap[0][i])
+        
+        
+        
+#         plot4 = plt.figure(4)
+#         state = decimalToBinary(G.nv, gs[0])
+#         N0 = [i for i in networkG.nodes if state[i] == 0]
+#         N1 = [i for i in networkG.nodes if state[i] == 1]
+#         E0 = [(i,j) for i,j in networkG.edges if (state[i] == 0 or state[j] == 0)]
+#         E1 = [(i,j) for i,j in networkG.edges if (state[i] == 1 and state[j] == 1)]
+        
+#         pos = nx.spring_layout(networkG)
+#         nx.draw_networkx_nodes(networkG, pos, nodelist = N0, node_color='red')
+#         nx.draw_networkx_nodes(networkG, pos, nodelist = N1, node_color='blue')
+#         nx.draw_networkx_edges(networkG, pos, edgelist = E0, style='dashdot', alpha=0.5, width=3)
+#         nx.draw_networkx_edges(networkG, pos, edgelist = E1, style='solid', width=3)
+#         nx.draw_networkx_labels(networkG, pos)
+        
+        
+        
+#         # Plot spectra over time in terms of scaled time s
+#         gammaMax = 100
+#         divisions = 100
+#         number_of_bands = 5
+#         gamma = np.linspace(0, 1, divisions)
+#         gamma = np.flip(gamma)
+#         energies = np.empty((number_of_bands, divisions))
+#         r = np.empty(divisions - 2)
+        
+#         for i in range(divisions):
+#             energy = np.linalg.eigvalsh(A(float(i/divisions))*H0 + B(float(i/divisions))*H1)
+#             for j in range(number_of_bands):
+#                 energies[j][i] = energy[j]
+        
+#         plot5 = plt.figure(5)
+#         plt.xlim(1, 0)
+#         for i in range(number_of_bands):
+#             plt.plot(gamma, energies[i], 1)
+        
+        
+#         plot6 = plt.figure(6)
+#         xAxis6 = np.linspace(0, t_f, len(overlap1[0]))
+#         plot6 = plt.figure(6)
+#         plt.xlim([0,t_f])
+#         plt.ylim([0,1])
+#         plt.plot(xAxis6, overlap1[0], 0.1)
+        
+        
+#         plot7 = plt.figure(7)
+#         xAxis7 = np.linspace(0, t_f, 1000)
+#         plotA = A(xAxis7/t_f)
+#         plotB = B(xAxis7/t_f)
+#         plt.xlim([0,t_f])
+#         plt.plot(xAxis7, plotA)
+#         plt.plot(xAxis7, plotB)
+        
+#         plt.show()
+
+#     for j in range(5):
+#         meanTime[j][nv - nv_min] = np.mean(simulation_times[j])
+#         deviationTime[j][nv - nv_min] = np.std(simulation_times[j])
+
+
+# plot8 = plt.figure(8)
+# xAxis = np.linspace(nv_min, nv_max, nv_max - nv_min + 1)
+# plt.xlim([nv_min, nv_max])
+# plt.xlabel("Size of the graph")
+# plt.ylabel("Mean simulation time (s)")
+# plt.xticks(np.arange(nv_min, nv_max + 1, step=1, dtype=int))
+# plt.plot(xAxis, meanTime[0], color = 'blue', label='RK4')
+# plt.plot(xAxis, meanTime[1], color = 'red', label='CN')
+# plt.plot(xAxis, meanTime[2], color = 'orange', label='RK3')
+# plt.plot(xAxis, meanTime[3], color = 'cyan', label='RK6')
+# plt.plot(xAxis, meanTime[4], color = 'black', label='ODE')
+# plt.legend(loc='best')
+# plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+#---------------------------NP-complete problem-------------------------------#
 #Create graph
 G = createGraph("graph2.txt")
 networkG = graph.toNetwork(G)
 
 
+
+
 #Create Hamiltonian matrices and initial state
 c = [0]
-K = 3
+K = nx.graph_clique_number(networkG)
 beta = 1.
 alpha = (K + 1)*beta
 H = graph.makeIsingHamiltonian(G, K, alpha, beta, c)
 dim = len(H)
-t_f = 10.
+t_f = 5.0
 delta_t = 0.01
 number_of_eigenstates = 4
 number_of_overlaps = 50
@@ -309,7 +541,7 @@ A, B = fun.schedule("DW_2000Q_6.txt")
 
 
 #Make evolution
-adiabaticEvolutionAB(dim, H0, H1, A, B, adiabatic, gs, t_f, delta_t)
+adiabaticEvolutionAB(dim, H0, H1, A, B, adiabatic, gs, t_f)
 
 psi = np.ones(dim, dtype = complex)
 initialT = time.time()
@@ -339,7 +571,7 @@ psi = np.ones(dim, dtype = complex)
 t = np.linspace(0, t_f, int(t_f/delta_t))
 iteration = 0
 initialT = time.time()
-r = scipy.integrate.ode(fun.f).set_integrator('zvode', method='bdf', with_jacobian=False)
+r = scipy.integrate.ode(fun.f).set_integrator('zvode', method='Adams', with_jacobian=False)
 r.set_initial_value(psi, 0).set_f_params(H0, H1, A, B, t_f)
 while r.successful() and r.t < t_f - 2*delta_t:
     psi_t = r.integrate(r.t + delta_t)
@@ -371,11 +603,11 @@ probability = probability / float(dim)
 probability =  np.amax(H)*probability
 xAxis1 = np.linspace(0, dim - 1,  dim)
 xAxis2a = np.linspace(0, t_f, len(successProbabilityRK[0]))
-xAxis2b = np.linspace(0, t_f, len(adiabatic[0]))
-xAxis2c = np.linspace(0, t_f, len(successProbabilityCN[0]))
-xAxis2d = np.linspace(0, t_f, len(successProbabilityRK3[0]))
-xAxis2e = np.linspace(0, t_f, len(successProbabilityRK6[0]))
-xAxis2f = np.linspace(0, t_f, len(successProbabilityODE[0]))
+xAxis2b = np.linspace(0, t_f, len(successProbabilityCN[0]))
+xAxis2c = np.linspace(0, t_f, len(successProbabilityRK3[0]))
+xAxis2d = np.linspace(0, t_f, len(successProbabilityRK6[0]))
+xAxis2e = np.linspace(0, t_f, len(successProbabilityODE[0]))
+xAxis2f = np.linspace(0, t_f, len(adiabatic[0]))
 xAxis3 = np.linspace(0, t_f, number_of_overlaps)
 
 
@@ -390,11 +622,11 @@ plot2 = plt.figure(2)
 plt.xlim([0,t_f])
 plt.ylim([0,1])
 plt.plot(xAxis2a, successProbabilityRK[0], 0.1, color = 'blue')
-plt.plot(xAxis2c, successProbabilityCN[0], 0.1, color = 'red')
-plt.plot(xAxis2d, successProbabilityRK3[0], 0.1, color = 'orange')
-plt.plot(xAxis2e, successProbabilityRK6[0], 0.1, color = 'cyan')
-plt.plot(xAxis2f, successProbabilityODE[0], 0.1, color = 'black')
-plt.plot(xAxis2b, adiabatic[0], 0.1, color = 'green')
+plt.plot(xAxis2b, successProbabilityCN[0], 0.1, color = 'red')
+plt.plot(xAxis2c, successProbabilityRK3[0], 0.1, color = 'orange')
+plt.plot(xAxis2d, successProbabilityRK6[0], 0.1, color = 'cyan')
+plt.plot(xAxis2e, successProbabilityODE[0], 0.1, color = 'black')
+plt.plot(xAxis2f, adiabatic[0], 0.1, color = 'green')
 
 
 
@@ -408,10 +640,18 @@ for i in range(number_of_eigenstates):
 
 
 plot4 = plt.figure(4)
-nx.draw(networkG, with_labels = True)
+state = decimalToBinary(G.nv, gs[0])
+N0 = [i for i in networkG.nodes if state[i] == 0]
+N1 = [i for i in networkG.nodes if state[i] == 1]
+E0 = [(i,j) for i,j in networkG.edges if (state[i] == 0 or state[j] == 0)]
+E1 = [(i,j) for i,j in networkG.edges if (state[i] == 1 and state[j] == 1)]
 
-
-
+pos = nx.spring_layout(networkG)
+nx.draw_networkx_nodes(networkG, pos, nodelist = N0, node_color='red')
+nx.draw_networkx_nodes(networkG, pos, nodelist = N1, node_color='blue')
+nx.draw_networkx_edges(networkG, pos, edgelist = E0, style='dashdot', alpha=0.5, width=3)
+nx.draw_networkx_edges(networkG, pos, edgelist = E1, style='solid', width=3)
+nx.draw_networkx_labels(networkG, pos)
 
 
 # Plot spectra over time (linear case)
@@ -424,7 +664,7 @@ energies = np.empty((number_of_bands, divisions))
 r = np.empty(divisions - 2)
 
 for i in range(divisions):
-    energy = np.linalg.eigvalsh((1-gamma[i])*H1 + gamma[i]*H0)
+    energy = np.linalg.eigvalsh(A(float(i/divisions))*H0 + B(float(i/divisions))*H1)
     for j in range(number_of_bands):
         energies[j][i] = energy[j]
 
@@ -451,32 +691,6 @@ plt.plot(xAxis7, plotA)
 plt.plot(xAxis7, plotB)
 
 plt.show()
-
-# # Plot spectra over time (Gamma case)
-# gammaMax = 100
-# divisions = 1000
-# number_of_bands = 4
-# gamma = np.linspace(0, gammaMax, divisions)
-# gamma = np.flip(gamma)
-# energies = np.empty((number_of_bands, divisions))
-# r = np.empty(divisions - 2)
-
-
-# for i in range(divisions):
-#     energy = np.linalg.eigvalsh(H1 + gamma[i]*H0)
-#     for j in range(number_of_bands):
-#         energies[j][i] = energy[j]
-
-# plot5 = plt.figure(5)
-# plt.xlim(2, 0)
-# plt.ylim(-5,5)
-# for i in range(number_of_bands):
-#     plt.plot(gamma, energies[i], 1)
-# plt.show()
-
-
-
-
 
 
 

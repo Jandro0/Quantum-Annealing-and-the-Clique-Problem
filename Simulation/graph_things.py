@@ -311,7 +311,18 @@ def nextIsing (state):
         n += 1
  
 
+def decimalToBinary (nv, d):
+    b = [0 for i in range(nv)]
+    
+    for i in range(nv):
+        mod = d % 2
+        b[nv - i - 1] = int(mod)
+        d = (d - mod)/2
+    
+    return b
+    
 
+    
 
 # networkG = nx.fast_gnp_random_graph(120, 0.6)
 # networkToFile(networkG, "graph4.txt")
