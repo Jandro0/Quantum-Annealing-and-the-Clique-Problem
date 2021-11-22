@@ -40,10 +40,10 @@ ne = nx.number_of_edges(G)
 
 
 # Quantum parameters 
-min_annealing_time = 10
-max_annealing_time = 1000
-num_annealing_time = 25
-annealing_times = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=int)
+min_annealing_time = 1.
+max_annealing_time = 10.
+num_annealing_time = 20
+annealing_times = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=float)
 probability_of_success = np.empty((2, num_annealing_time))
 num_reads = 100
 B = 1.
@@ -141,9 +141,10 @@ for i in range(num_annealing_time):
 
 
 plt.figure()
-xAxis = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=int)
+xAxis = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=float)
 plt.xlabel("Annealing time (microseconds)")
 plt.ylabel("Probability of success")
+plt.ylim([0,1])
 plt.plot(xAxis, probability_of_success[0], color='blue', label='DW_6000Q_6')
 plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4.1')
 plt.legend(loc='best')
