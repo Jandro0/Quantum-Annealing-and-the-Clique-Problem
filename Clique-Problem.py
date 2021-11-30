@@ -30,22 +30,24 @@ from collections import defaultdict
 from Functions import fileToNetwork, networkToFile
 from dwave.system.samplers import DWaveSampler, LeapHybridSampler, LeapHybridBQMSampler
 from dwave.system.composites import EmbeddingComposite
+import dwave.inspector
 
 
 # Graph parameters
-K = 3 #Size of the clique we are searching
-G = fileToNetwork("graph2.txt")
+# G = fileToNetwork("graph1.txt")
+G = nx.fast_gnp_random_graph(5, 0.5)
+K = nx.graph_clique_number(G) #Size of the clique we are searching
 nv = nx.number_of_nodes(G)
 ne = nx.number_of_edges(G)
 
 
 # Quantum parameters 
-min_annealing_time = 1.
+min_annealing_time = 10.
 max_annealing_time = 10.
-num_annealing_time = 20
+num_annealing_time = 1
 annealing_times = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=float)
 probability_of_success = np.empty((2, num_annealing_time))
-num_reads = 100
+num_reads = 500
 B = 1.
 A = (K + 1)*B
 chain_strength = 150
@@ -75,18 +77,18 @@ for i in range(num_annealing_time):
             qpu = DWaveSampler(solver={'topology__type': 'chimera'}, auto_scale=True)
             sampler = EmbeddingComposite(qpu)
             sampleset = sampler.sample_ising(h, J,
-                                            chain_strength=chain_strength,
                                             num_reads=num_reads,
                                             annealing_time=int(annealing_times[i]),
                                             label='Test - Clique Problem')
+            #dwave.inspector.show(sampleset)
         elif (select == 1):
             qpu = DWaveSampler(solver={'topology__type': 'pegasus'}, auto_scale=True)
             sampler = EmbeddingComposite(qpu)
             sampleset = sampler.sample_ising(h, J,
-                                            chain_strength=chain_strength,
                                             num_reads=num_reads,
                                             annealing_time=int(annealing_times[i]),
                                             label='Test - Clique Problem')
+            #dwave.inspector.show(sampleset)
         elif (select == 2):
             sampler = LeapHybridSampler()
             sampleset = sampler.sample_ising(h, J)
@@ -103,6 +105,7 @@ for i in range(num_annealing_time):
         print(sampleset.to_pandas_dataframe())
         print(' ')
         print('Energy: ' + str(constant + sampleset.first.energy))
+        print(qpu.properties["h_range"], qpu.properties["j_range"])
         #print(sampleset.data)
         #print(sampleset.info)
         #print(sampleset.first)
@@ -150,3 +153,5 @@ plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4
 plt.legend(loc='best')
 filename = "Probabilty of success for different annealing times.png"
 plt.savefig(filename, bbox_inches='tight')
+
+

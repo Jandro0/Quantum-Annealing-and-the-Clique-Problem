@@ -810,8 +810,6 @@ def evolutionABRK6 (dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, numbe
                 dot = np.dot(psi, vec)
                 overlap[0][k][i] = (np.real(dot)*np.real(dot) + np.imag(dot)*np.imag(dot))/float(dim)
                 energy[0][k][i] = w[k]
-            
-        
         
     return psi
 
@@ -840,15 +838,30 @@ def adiabaticEvolution (dim, H0, H1, Gamma, adiabatic, gs, t_f, delta_t):
 
 #Compute the overlap assuming adiabatic evolution
 def adiabaticEvolutionAB (dim, H0, H1, A, B, adiabatic, gs, t_f):
-    times = np.linspace(0, t_f, 100)
+    sVector = np.linspace(0, 1, 100)
        
-    for t in times:
-        H = A(t/t_f)*H0 + B(t/t_f)*H1
+    for s in sVector:
+        H = A(s)*H0 + B(s)*H1
         w, v = np.linalg.eigh(H)
         vec = np.conjugate(v[:, 0])
         adiabatic[0] = np.append(adiabatic[0], 0.)
         for i in gs:
             adiabatic[0][-1] += np.real(vec[i])*np.real(vec[i]) + np.imag(vec[i])*np.imag(vec[i])
+            
+            
+def gap(dim, H0, H1, A, B, gs):
+    sVector = np.linspace(0, 1, 100)
+    degeneracy = len(gs)
+    minimum_gap = 1e100
+    
+    for s in sVector:
+        H = A(s)*H0 + B(s)*H1
+        energy = np.linalg.eigvalsh(H)
+        if (minimum_gap > energy[degeneracy] - energy[0]):
+            minimum_gap = energy[degeneracy] - energy[0]
+    
+    return minimum_gap
+        
 
 
 
