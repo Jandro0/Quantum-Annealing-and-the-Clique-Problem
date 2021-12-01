@@ -275,6 +275,9 @@ from evolution import evolutionABRK62, evolutionABRK22
 # plt.show()
 
 
+
+
+
 #---------------------------NP-complete problem-------------------------------#
 # nv_min = 3  #Minimum number of vertices
 # nv_max = 9 #Maximum number of vertices
@@ -504,7 +507,7 @@ from evolution import evolutionABRK62, evolutionABRK22
 
 #---------------------------NP-complete problem-------------------------------#
 #Create graph
-G = createGraph("graph2.txt")
+G = createGraph("graph1.txt")
 networkG = graph.toNetwork(G)
 
 
@@ -517,19 +520,19 @@ beta = 1.
 alpha = (K + 1)*beta
 H = graph.makeIsingHamiltonian(G, K, alpha, beta, c)
 dim = len(H)
-t_f = 1000.0
-delta_t = 0.1
+t_f = 20.
+delta_t = 0.01
 number_of_eigenstates = 4
 number_of_overlaps = 50
 iterations = int(t_f/delta_t)
 gs = groundState(dim, H)
 H1 = makeFinalHamiltonian(dim, H)
 H0 = makeInitialHamiltonian(len(G.adjacency))
-# successProbabilityRK = [np.empty(0)]
-# successProbabilityRK3 = [np.empty(0)]
-# successProbabilityRK6 = [np.empty(0)]
+successProbabilityRK = [np.empty(0)]
+successProbabilityRK3 = [np.empty(0)]
+successProbabilityRK6 = [np.empty(0)]
 successProbabilityCN = [np.empty(0)]
-# successProbabilityODE = [np.empty(0)]
+successProbabilityODE = [np.empty(0)]
 adiabatic = [np.empty(0)]
 energy = [np.empty([number_of_eigenstates, number_of_overlaps])]
 overlap = [np.empty([number_of_eigenstates, number_of_overlaps])]
@@ -541,11 +544,11 @@ A, B = fun.schedule("DW_2000Q_6.txt")
 minimum_gap = gap(dim, H0, H1, A, B, gs)
 adiabaticEvolutionAB(dim, H0, H1, A, B, adiabatic, gs, t_f)
 
-# psi = np.ones(dim, dtype = complex)
-# initialT = time.time()
-# psi = evolutionABRK2(dim, H0, H1, psi, A, B, successProbabilityRK, gs, t_f, delta_t)
-# finalT = time.time()
-# print("RK4: " + str(finalT - initialT))
+psi = np.ones(dim, dtype = complex)
+initialT = time.time()
+psi = evolutionABRK2(dim, H0, H1, psi, A, B, successProbabilityRK, gs, t_f, delta_t)
+finalT = time.time()
+print("RK4: " + str(finalT - initialT))
 
 psi = np.ones(dim, dtype = complex)
 initialT = time.time()
@@ -553,41 +556,41 @@ psi = evolutionABCN2(dim, H0, H1, psi, A, B, successProbabilityCN, gs, t_f, delt
 finalT = time.time()
 print("CN: " + str(finalT - initialT))
 
-# psi = np.ones(dim, dtype = complex)
-# initialT = time.time()
-# psi = evolutionABRK22(dim, H0, H1, psi, A, B, successProbabilityRK3, gs, t_f, delta_t)
-# finalT = time.time()
-# print("RK3: " + str(finalT - initialT))
+psi = np.ones(dim, dtype = complex)
+initialT = time.time()
+psi = evolutionABRK22(dim, H0, H1, psi, A, B, successProbabilityRK3, gs, t_f, delta_t)
+finalT = time.time()
+print("RK3: " + str(finalT - initialT))
 
-# psi = np.ones(dim, dtype = complex)
-# initialT = time.time()
-# psi = evolutionABRK62(dim, H0, H1, psi, A, B, successProbabilityRK6, gs, t_f, delta_t)
-# finalT = time.time()
-# print("RK6: " + str(finalT - initialT))
+psi = np.ones(dim, dtype = complex)
+initialT = time.time()
+psi = evolutionABRK62(dim, H0, H1, psi, A, B, successProbabilityRK6, gs, t_f, delta_t)
+finalT = time.time()
+print("RK6: " + str(finalT - initialT))
 
-# psi = np.ones(dim, dtype = complex)
-# t = np.linspace(0, t_f, int(t_f/delta_t))
-# iteration = 0
-# initialT = time.time()
-# r = scipy.integrate.ode(fun.f).set_integrator('zvode', method='Adams', with_jacobian=False)
-# r.set_initial_value(psi, 0).set_f_params(H0, H1, A, B, t_f)
-# while r.successful() and r.t < t_f - 2*delta_t:
-#     psi_t = r.integrate(r.t + delta_t)
+psi = np.ones(dim, dtype = complex)
+t = np.linspace(0, t_f, int(t_f/delta_t))
+iteration = 0
+initialT = time.time()
+r = scipy.integrate.ode(fun.f).set_integrator('zvode', method='Adams', with_jacobian=False)
+r.set_initial_value(psi, 0).set_f_params(H0, H1, A, B, t_f)
+while r.successful() and r.t < t_f - 2*delta_t:
+    psi_t = r.integrate(r.t + delta_t)
     
-#     if (iteration%30 == 0):
-#         successProbabilityODE[0] = np.append(successProbabilityODE[0], 0.)
-#         for i in gs:
-#             successProbabilityODE[0][-1] += np.real(psi_t[i])*np.real(psi_t[i]) + np.imag(psi_t[i])*np.imag(psi_t[i])
+    if (iteration%30 == 0):
+        successProbabilityODE[0] = np.append(successProbabilityODE[0], 0.)
+        for i in gs:
+            successProbabilityODE[0][-1] += np.real(psi_t[i])*np.real(psi_t[i]) + np.imag(psi_t[i])*np.imag(psi_t[i])
        
-#         successProbabilityODE[0][-1] = successProbabilityODE[0][-1]/float(dim)
-# finalT = time.time()
-# print("ODE: " + str(finalT - initialT))
+        successProbabilityODE[0][-1] = successProbabilityODE[0][-1]/float(dim)
+finalT = time.time()
+print("ODE: " + str(finalT - initialT))
 
-# psi = np.ones(dim, dtype = complex)
-# psi = evolutionABRK6(dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, number_of_overlaps, number_of_eigenstates)
+psi = np.ones(dim, dtype = complex)
+psi = evolutionABRK6(dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, number_of_overlaps, number_of_eigenstates)
 
-# psi = np.ones(dim, dtype = complex)
-# psi = evolutionABRK5(dim, H0, H1, psi, A, B, overlap1, gs, t_f, delta_t)
+psi = np.ones(dim, dtype = complex)
+psi = evolutionABRK5(dim, H0, H1, psi, A, B, overlap1, gs, t_f, delta_t)
 
 
 # Probabilities
@@ -600,11 +603,11 @@ probability = probability / float(dim)
 
 probability =  np.amax(H)*probability
 xAxis1 = np.linspace(0, dim - 1,  dim)
-# xAxis2a = np.linspace(0, t_f, len(successProbabilityRK[0]))
+xAxis2a = np.linspace(0, t_f, len(successProbabilityRK[0]))
 xAxis2b = np.linspace(0, t_f, len(successProbabilityCN[0]))
-# xAxis2c = np.linspace(0, t_f, len(successProbabilityRK3[0]))
-# xAxis2d = np.linspace(0, t_f, len(successProbabilityRK6[0]))
-# xAxis2e = np.linspace(0, t_f, len(successProbabilityODE[0]))
+xAxis2c = np.linspace(0, t_f, len(successProbabilityRK3[0]))
+xAxis2d = np.linspace(0, t_f, len(successProbabilityRK6[0]))
+xAxis2e = np.linspace(0, t_f, len(successProbabilityODE[0]))
 xAxis2f = np.linspace(0, t_f, len(adiabatic[0]))
 xAxis3 = np.linspace(0, t_f, number_of_overlaps)
 
@@ -619,11 +622,11 @@ plt.plot(xAxis1, probability)
 plot2 = plt.figure(2)
 plt.xlim([0,t_f])
 plt.ylim([0,1])
-# plt.plot(xAxis2a, successProbabilityRK[0], 0.1, color = 'blue')
+plt.plot(xAxis2a, successProbabilityRK[0], 0.1, color = 'blue')
 plt.plot(xAxis2b, successProbabilityCN[0], 0.1, color = 'red')
-# plt.plot(xAxis2c, successProbabilityRK3[0], 0.1, color = 'orange')
-# plt.plot(xAxis2d, successProbabilityRK6[0], 0.1, color = 'cyan')
-# plt.plot(xAxis2e, successProbabilityODE[0], 0.1, color = 'black')
+plt.plot(xAxis2c, successProbabilityRK3[0], 0.1, color = 'orange')
+plt.plot(xAxis2d, successProbabilityRK6[0], 0.1, color = 'cyan')
+plt.plot(xAxis2e, successProbabilityODE[0], 0.1, color = 'black')
 plt.plot(xAxis2f, adiabatic[0], 0.1, color = 'green')
 
 

@@ -35,17 +35,19 @@ import dwave.inspector
 
 # Graph parameters
 # G = fileToNetwork("graph1.txt")
-G = nx.fast_gnp_random_graph(5, 0.5)
+G = nx.fast_gnp_random_graph(7, 0.5)
 K = nx.graph_clique_number(G) #Size of the clique we are searching
+print("Clique number: " + str(K))
 nv = nx.number_of_nodes(G)
 ne = nx.number_of_edges(G)
 
 
 # Quantum parameters 
-min_annealing_time = 10.
-max_annealing_time = 10.
+min_annealing_time = 1.
+max_annealing_time = 1990.
 num_annealing_time = 1
-annealing_times = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=float)
+annealing_steps = np.linspace(np.log10(min_annealing_time), np.log10(max_annealing_time), num_annealing_time, dtype=float)
+annealing_times = np.power(10, annealing_steps)
 probability_of_success = np.empty((2, num_annealing_time))
 num_reads = 500
 B = 1.
@@ -78,7 +80,7 @@ for i in range(num_annealing_time):
             sampler = EmbeddingComposite(qpu)
             sampleset = sampler.sample_ising(h, J,
                                             num_reads=num_reads,
-                                            annealing_time=int(annealing_times[i]),
+                                            annealing_time=annealing_times[i],
                                             label='Test - Clique Problem')
             #dwave.inspector.show(sampleset)
         elif (select == 1):
@@ -86,7 +88,7 @@ for i in range(num_annealing_time):
             sampler = EmbeddingComposite(qpu)
             sampleset = sampler.sample_ising(h, J,
                                             num_reads=num_reads,
-                                            annealing_time=int(annealing_times[i]),
+                                            annealing_time=annealing_times[i],
                                             label='Test - Clique Problem')
             #dwave.inspector.show(sampleset)
         elif (select == 2):
@@ -117,7 +119,7 @@ for i in range(num_annealing_time):
         if (constant == -sampleset.first.energy): 
             print(str(K) + '-clique found with annealing_time = ' + str(annealing_times[i]) + ':', state, '\n\n')
 
-            groundStateSet = sampleset.lowest(atol=0.1)
+            groundStateSet = sampleset.lowest(atol=2.0)
             probability_of_success[select][i] = float(np.sum(groundStateSet.record.num_occurrences))/float(num_reads)
 
         else: 
@@ -144,7 +146,7 @@ for i in range(num_annealing_time):
 
 
 plt.figure()
-xAxis = np.linspace(min_annealing_time, max_annealing_time, num_annealing_time, dtype=float)
+xAxis = annealing_times
 plt.xlabel("Annealing time (microseconds)")
 plt.ylabel("Probability of success")
 plt.ylim([0,1])
@@ -153,5 +155,7 @@ plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4
 plt.legend(loc='best')
 filename = "Probabilty of success for different annealing times.png"
 plt.savefig(filename, bbox_inches='tight')
+
+
 
 

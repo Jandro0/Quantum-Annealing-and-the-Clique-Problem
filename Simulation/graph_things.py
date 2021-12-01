@@ -46,41 +46,32 @@ class graph:
         c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
                 
                 
+        h_values = h.values() 
+        h_range = 2.0
+        h_max = max(h_values)
+        h_min = min(h_values)
+        J_values = J.values()
+        J_range = 1.0
+        J_max = max(J_values)
+        J_min = min(J_values)
+        
+        scale = max([max([h_max/h_range, 0]), max([-h_min/h_range, 0]), max([J_max/J_range, 0]), max([-J_min/J_range, 0])])
+        
+        
+        for i in range(self.nv):
+            h[(i)] /= scale
+        for i in range(self.nv):
+            for j in range(i):
+                J[(i,j)] /= scale
+        
+        
         for k in range(dim):     
             for i in range(self.nv):
                 Hamiltonian[k] += h[i]*state[i]
                 for j in range(i):
                     Hamiltonian[k] += J[(i,j)]*state[i]*state[j]
             
-            
             nextIsing(state)
-        
-        
-        # bstate = [0 for i in range(self.nv)]
-        
-        # h = defaultdict(int)
-        # for i in range(self.nv):
-        #     h[(i)] = A*(1-2*K)
-        
-        # J = defaultdict(int)
-        # for i in range(self.nv):
-        #     for j in range(i):
-        #         J[(i,j)] = 4*A
-        #     for j in self.adjacency[i]:
-        #         if (i > j):
-        #             J[(i,j)] -= B
-        
-        # c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv + A*self.nv*(self.nv-1) - B*self.ne)/2.
-            
-        # for k in range(dim):     
-        #     for i in range(self.nv):
-        #         Hamiltonian[k] += h[i]*bstate[i]
-        #         for j in range(i):
-        #             Hamiltonian[k] += J[(i,j)]*bstate[i]*bstate[j]
-            
-        #     print(bstate)
-        #     plus1(bstate)
-            
         
         return Hamiltonian
         
