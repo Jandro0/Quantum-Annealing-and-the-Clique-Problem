@@ -859,18 +859,24 @@ def adiabaticEvolutionAB(dim, H0, H1, A, B, adiabatic, gs, t_f):
                 np.imag(vec[i])*np.imag(vec[i])
 
 
-def gap(dim, H0, H1, A, B, gs):
-    sVector = np.linspace(0, 1, 100)
+# Spectra over time
+def spectra(dim, H0, H1, A, B, gs, divisions, number_of_bands):
+    sVector = np.linspace(0, 1, divisions)
     degeneracy = len(gs)
     minimum_gap = 1e100
-
-    for s in sVector:
-        H = A(s)*H0 + B(s)*H1
-        energy = np.linalg.eigvalsh(H)
+    sVector = np.linspace(0, 1, divisions)
+    energies = np.empty((number_of_bands, divisions))
+    
+    for i in range(divisions):
+        energy = np.linalg.eigvalsh(A(sVector[i])*H0 + B(sVector[i])*H1)
+        for j in range(number_of_bands):
+            energies[j][i] = energy[j]
         if (minimum_gap > energy[degeneracy] - energy[0]):
             minimum_gap = energy[degeneracy] - energy[0]
 
-    return minimum_gap
+    return minimum_gap, energies
+
+
 
 
 # Compute the ground states of a given Hamiltonian
@@ -884,7 +890,7 @@ def groundState(dim, H):
     gs = []
 
     for i in range(dim):
-        if (H[i] == mini):
+        if (np.absolute(H[i] - mini) < 0.001):
             gs.append(i)
 
     return gs

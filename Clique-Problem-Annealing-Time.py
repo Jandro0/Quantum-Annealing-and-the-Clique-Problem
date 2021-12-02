@@ -43,23 +43,26 @@ ne = nx.number_of_edges(G)
 
 
 # Quantum parameters 
-min_annealing_time = 1.
-max_annealing_time = 1990.
+min_annealing_time = 20.
+max_annealing_time = 20.
 num_annealing_time = 1
 annealing_steps = np.linspace(np.log10(min_annealing_time), np.log10(max_annealing_time), num_annealing_time, dtype=float)
 annealing_times = np.power(10, annealing_steps)
+min_RCS = 0.1
+max_RCS = 1.0
+num_RCS = 20
+RCS = np.linspace(min_RCS, max_RCS, num_RCS)
 probability_of_success = np.empty((2, num_annealing_time))
-num_reads = 500
-B = 1.
+num_reads = 100
+B = 1.0
 A = (K + 1)*B
-chain_strength = 150
 
 
 
 # Initialize matrix and fill in appropiate values
 h = defaultdict(int)
 for i in range(nv):
-    h[(i)] = A*(2*K-nv)/2. + B*len(G[i])/4.
+    h[(i)] = -A*(2*K-nv)/2. - B*len(G[i])/4.
 
 J = defaultdict(int)
 for i in range(nv):
@@ -70,6 +73,10 @@ for i in range(nv):
             J[(i,j)] -= B/4.
 
 constant = A*K*K + (B*K*(K-1) - A*(2*K-1)*nv)/2. + (A*nv*(nv-1) - B*ne)/4.
+
+# Compute the maximum strength 
+max_strength = max(J.values())
+
 
 
 # Run the annealing with the desired sampler
@@ -86,7 +93,7 @@ for i in range(num_annealing_time):
         elif (select == 1):
             qpu = DWaveSampler(solver={'topology__type': 'pegasus'}, auto_scale=True)
             sampler = EmbeddingComposite(qpu)
-            sampleset = sampler.sample_ising(h, J,
+            sampleset = sampler.sample_ising(h, J,                
                                             num_reads=num_reads,
                                             annealing_time=annealing_times[i],
                                             label='Test - Clique Problem')
@@ -128,10 +135,10 @@ for i in range(num_annealing_time):
 
 
         # Plot and save
-        N0 = [i for i in G.nodes if state[i] == 1]
-        N1 = [i for i in G.nodes if state[i] == -1]
-        E0 = [(i,j) for i,j in G.edges if (state[i] == 1 or state[j] == 1)]
-        E1 = [(i,j) for i,j in G.edges if (state[i] == -1 and state[j] == -1)]
+        N0 = [i for i in G.nodes if state[i] == -1]
+        N1 = [i for i in G.nodes if state[i] == 1]
+        E0 = [(i,j) for i,j in G.edges if (state[i] == -1 or state[j] == -1)]
+        E1 = [(i,j) for i,j in G.edges if (state[i] == 1 and state[j] == 1)]
 
         plt.figure()
         pos = nx.spring_layout(G)
@@ -155,7 +162,5 @@ plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4
 plt.legend(loc='best')
 filename = "Probabilty of success for different annealing times.png"
 plt.savefig(filename, bbox_inches='tight')
-
-
 
 

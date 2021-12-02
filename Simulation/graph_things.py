@@ -29,11 +29,11 @@ class graph:
     def makeIsingHamiltonian(self, K, A, B, c):
         dim = pow(2, self.nv)
         Hamiltonian = np.zeros(dim)
-        state = [1 for i in range(self.nv)]
+        state = [-1 for i in range(self.nv)]
         
         h = defaultdict(int)
         for i in range(self.nv):
-            h[(i)] = A*(2*K-self.nv)/2. + B*len(self.adjacency[i])/4.
+            h[(i)] = -A*(2*K-self.nv)/2. - B*len(self.adjacency[i])/4.
         
         J = defaultdict(int)
         for i in range(self.nv):
@@ -45,7 +45,7 @@ class graph:
         
         c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
                 
-                
+   
         h_values = h.values() 
         h_range = 2.0
         h_max = max(h_values)
@@ -288,17 +288,17 @@ def nextIsing (state):
     done = False
 
     while not (done):
-        if (state[n] == 1):
+        if (state[n] == -1):
             done = True
             break
         n -= 1
         if (n < 0): 
             break
     
-    state[n] = -1
+    state[n] = 1
     n += 1
     while (n < len(state)):
-        state[n] = 1
+        state[n] = -1
         n += 1
  
 

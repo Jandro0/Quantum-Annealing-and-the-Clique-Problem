@@ -27,8 +27,8 @@ def schedule (nameIn):
         for line in file:
             content = line.split()
             t[i] = float(content[0])
-            vecA[i] = (float(content[1])/2)
-            vecB[i] = float(content[2])/2
+            vecA[i] = np.pi*float(content[1])
+            vecB[i] = np.pi*float(content[2])
             i += 1
             
     A = interp1d(t, vecA, kind = 'quadratic')
