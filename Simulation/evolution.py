@@ -85,7 +85,7 @@ def evolutionCN2(dim, H0, H1, psi, Gamma, successProbability, gs, t_f, delta_t):
     successProbability[0][iteration] = successProbability[0][iteration] / \
         float(dim)
 
-    plot = plt.figure()
+    # plot = plt.figure()
 
     while (t < t_f):
         H = H1 + Gamma(t) * H0
@@ -259,7 +259,7 @@ def evolutionABCN2(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t)
     successProbability[0][iteration] = successProbability[0][iteration] / \
         float(dim)
 
-    plot = plt.figure()
+    # plot = plt.figure()
 
     while (t < t_f):
         H = A(t/t_f)*H0 + B(t/t_f)*H1
@@ -267,7 +267,7 @@ def evolutionABCN2(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t)
         t += delta_t
         iteration += 1
 
-        if (iteration % 1 == 0):
+        if (iteration % int(t_f + 1) == 0):
             successProbability[0] = np.append(successProbability[0], 0.)
             for i in gs:
                 successProbability[0][-1] += np.real(psi[i])*np.real(
@@ -279,13 +279,13 @@ def evolutionABCN2(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t)
         #     for k in range(dim):
         #         probability[k] = (np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k]))/float(dim)
 
-        #     plt.xlim(0, dim - 1)9
+        #     plt.xlim(0, dim - 1)
         #     plt.ylim(0, 1)
         #     plt.plot(xAxis, probability, color = 'black')
         #     plt.pause(0.0000001)
         #     plt.clf()
 
-        #     print(str(t) + '   ' + str(successProbability[0][iteration]))
+        #     print(str(t) + '   ' + str(successProbability[0][-1]))
 
     return psi
 
@@ -354,6 +354,7 @@ def evolutionABCN4(dim, H0, H1, psi, A, B, successProbability, pSuccess, gs, t_f
 def evolutionABCN5(dim, H0, H1, psi, A, B, overlap, gs, t_f, delta_t):
     t = 0
     degeneracy = len(gs)
+    iteration = 0
 
     w, v = np.linalg.eigh(A(t/t_f)*H0 + B(t/t_f)*H1)
     prod = 0
@@ -366,18 +367,20 @@ def evolutionABCN5(dim, H0, H1, psi, A, B, overlap, gs, t_f, delta_t):
     overlap[0] = np.append(overlap[0], prod)
 
     while (t < t_f):
+        iteration += 1
         H = A(t/t_f)*H0 + B(t/t_f)*H1
         psi = timeplus1(dim, H, psi, delta_t)
         t += delta_t
 
-        w, v = np.linalg.eigh(H)
-        prod = 0
-        for i in range(degeneracy):
-            vec = np.conjugate(v[:, i])
-            dot = np.dot(psi, vec)
-            prod += (np.real(dot)*np.real(dot) +
-                     np.imag(dot)*np.imag(dot))/float(dim)
-        overlap[0] = np.append(overlap[0], prod)
+        if (iteration % int(t_f + 1) == 0):
+            w, v = np.linalg.eigh(H)
+            prod = 0
+            for i in range(degeneracy):
+                vec = np.conjugate(v[:, i])
+                dot = np.dot(psi, vec)
+                prod += (np.real(dot)*np.real(dot) +
+                         np.imag(dot)*np.imag(dot))/float(dim)
+            overlap[0] = np.append(overlap[0], prod)
 
     return psi
 
@@ -433,7 +436,7 @@ def evolutionRK2(dim, H0, H1, psi, Gamma, successProbability, gs, t_f, delta_t):
     successProbability[0][iteration] = successProbability[0][iteration] / \
         float(dim)
 
-    plot = plt.figure()
+    # plot = plt.figure()
 
     while (t < t_f):
         k1 = (0. - 1.j)*np.matmul(H1 + Gamma(t)*H0, psi)
@@ -638,7 +641,7 @@ def evolutionABRK2(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t)
 
     successProbability[0][0] = successProbability[0][0]/float(dim)
 
-    plot = plt.figure()
+    # plot = plt.figure()
 
     while (t < t_f - delta_t):
         k1 = (0. - 1.j)*np.matmul(A(t/t_f)*H0 + B(t/t_f)*H1, psi)
@@ -652,7 +655,7 @@ def evolutionABRK2(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t)
         t += delta_t
         iteration += 1
 
-        if (iteration % 1 == 0):
+        if (iteration % int(t_f + 1) == 0):
             successProbability[0] = np.append(successProbability[0], 0.)
             for i in gs:
                 successProbability[0][-1] += np.real(psi[i])*np.real(
@@ -776,7 +779,7 @@ def evolutionABRK5(dim, H0, H1, psi, A, B, overlap, gs, t_f, delta_t):
         psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
         t += delta_t
 
-        if (iteration % 10 == 0):
+        if (iteration % int(t_f + 1) == 0):
             w, v = np.linalg.eigh(H)
             prod = 0
             for i in range(degeneracy):

@@ -25,6 +25,97 @@ class graph:
         
         
         
+    # Create the Hamiltonian with chains for graph2.txt
+    def makeHamiltonianWithChains (self, target_graph, minor, K, A, B, c, RCS):
+        used_nodes = []
+        for vertex in minor:
+            for node in minor[vertex]:
+                used_nodes.append(node)
+        
+        number_of_physical_qubits = len(used_nodes)
+        used_graph = target_graph.subgraph(used_nodes)
+        
+            
+        dim = pow(2, number_of_physical_qubits)
+        Hamiltonian = np.zeros(dim) 
+        state = [-1 for i in range(number_of_physical_qubits)]
+        
+        h = defaultdict(int)
+        for node in used_graph.nodes:
+            h[(node)] = 0
+        for i in range(self.nv):
+            chain_length = len(minor[i])
+            for node in minor[i]:
+                h[(node)] = -A*(2*K-self.nv)/2. - B*len(self.adjacency[i])/4.
+                h[(node)] /= chain_length    
+                
+        logical_J = defaultdict(int)
+        for i in range(self.nv):
+            for j in range(i):
+                logical_J[(i,j)] = A/2.
+            for j in self.adjacency[i]:
+                if (i > j):
+                    logical_J[(i,j)] -= B/4.
+        
+        logical_J_values = logical_J.values()
+        logical_J_max = max(logical_J_values)
+        logical_J_min = min(logical_J_values)
+        chain_strength = max(logical_J_max, -logical_J_min) * RCS
+        
+        J = defaultdict(int)
+        for i in range(number_of_physical_qubits):
+            for j in range(i):
+                J[(used_nodes[i], used_nodes[j])] = 0
+        
+        for i in range(self.nv):
+            chain = used_graph.subgraph(minor[i])
+            for edge in chain.edges:
+                J[edge] = -chain_strength
+            for j in range(i):
+                number_of_connections = 0
+                for node_i in minor[i]:
+                    for node_j in used_graph.neighbors(node_i):
+                        if node_j in minor[j]:
+                            number_of_connections += 1
+                for node_i in minor[i]:
+                    for node_j in used_graph.neighbors(node_i):
+                        if node_j in minor[j]:
+                            J[(node_i, node_j)] = logical_J[(i,j)]/number_of_connections
+            
+        
+        c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
+        
+        
+        h_values = h.values() 
+        h_range = 2.0
+        h_max = max(h_values)
+        h_min = min(h_values)
+        J_values = J.values()
+        J_range = 1.0
+        J_max = max(J_values)
+        J_min = min(J_values)
+        
+        scale = max([max([h_max/h_range, 0]), max([-h_min/h_range, 0]), max([J_max/J_range, 0]), max([-J_min/J_range, 0]), chain_strength/J_range])
+        
+        for i in range(number_of_physical_qubits):
+            h[(used_nodes[i])] /= scale
+        for i in range(number_of_physical_qubits):
+            for j in range(i):
+                J[(used_nodes[i], used_nodes[j])] /= scale
+        
+        
+        for k in range(dim):     
+            for i in range(number_of_physical_qubits):
+                Hamiltonian[k] += h[used_nodes[i]]*state[i]
+                for j in range(i):
+                    Hamiltonian[k] += J[(used_nodes[i],used_nodes[j])]*state[i]*state[j]
+            
+            nextIsing(state)
+        
+        return Hamiltonian
+        
+        
+        
     # Create the Ising Hamiltonian as a vector in the NP-complete case
     def makeIsingHamiltonian(self, K, A, B, c):
         dim = pow(2, self.nv)
@@ -44,8 +135,7 @@ class graph:
                     J[(i,j)] -= B/4.
         
         c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
-                
-   
+        
         h_values = h.values() 
         h_range = 2.0
         h_max = max(h_values)
@@ -227,7 +317,8 @@ def fileToNetwork (nameIn):
         nv, ne = [int(x) for x in next(file).split()]
         for line in file:
             e = line.split()
-            network.add_edge(*e)
+            edge = [int(e[0]), int(e[1])]
+            network.add_edge(*edge)
     
     return network
 

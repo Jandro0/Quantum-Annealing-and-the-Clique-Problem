@@ -50,7 +50,7 @@ annealing_steps = np.linspace(np.log10(min_annealing_time), np.log10(max_anneali
 annealing_times = np.power(10, annealing_steps)
 min_RCS = 0.1
 max_RCS = 20.0
-num_RCS = 20
+num_RCS = 1
 RCS = np.linspace(min_RCS, max_RCS, num_RCS)
 probability_of_success = np.empty((2, num_RCS))
 num_reads = 100
@@ -169,6 +169,8 @@ plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4
 plt.legend(loc='best')
 filename = "Probabilty of success for different chain strengths.png"
 plt.savefig(filename, bbox_inches='tight')
+
+
 
 
 

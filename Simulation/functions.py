@@ -12,7 +12,7 @@ def exponentialsqrt (t):
     return 100/np.exp(np.sqrt(t))
 
 def linearA (s):
-    return 1 - s
+    return (1 - s)
 
 def linearB (s):
     return s
