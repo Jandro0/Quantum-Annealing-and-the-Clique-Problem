@@ -31,9 +31,11 @@ class graph:
         for vertex in minor:
             for node in minor[vertex]:
                 used_nodes.append(node)
+        used_nodes.sort()
         
         number_of_physical_qubits = len(used_nodes)
         used_graph = target_graph.subgraph(used_nodes)
+
         
             
         dim = pow(2, number_of_physical_qubits)
@@ -41,13 +43,14 @@ class graph:
         state = [-1 for i in range(number_of_physical_qubits)]
         
         h = defaultdict(int)
+        logical_h = defaultdict(int)
         for node in used_graph.nodes:
             h[(node)] = 0
         for i in range(self.nv):
-            chain_length = len(minor[i])
+            chain_length = float(len(minor[i]))
+            logical_h[(i)]= -A*(2*K-self.nv)/2. - B*len(self.adjacency[i])/4.
             for node in minor[i]:
-                h[(node)] = -A*(2*K-self.nv)/2. - B*len(self.adjacency[i])/4.
-                h[(node)] /= chain_length    
+                h[(node)] = logical_h[(i)]/chain_length
                 
         logical_J = defaultdict(int)
         for i in range(self.nv):
@@ -60,17 +63,21 @@ class graph:
         logical_J_values = logical_J.values()
         logical_J_max = max(logical_J_values)
         logical_J_min = min(logical_J_values)
-        chain_strength = max(logical_J_max, -logical_J_min) * RCS
+        logical_h_max = max(logical_h.values())
+        logical_h_min = min(logical_h.values())
+        chain_strength = max(logical_J_max, -logical_J_min, logical_h_max, -logical_h_min) * RCS
         
         J = defaultdict(int)
         for i in range(number_of_physical_qubits):
             for j in range(i):
                 J[(used_nodes[i], used_nodes[j])] = 0
         
+
         for i in range(self.nv):
             chain = used_graph.subgraph(minor[i])
-            for edge in chain.edges:
-                J[edge] = -chain_strength
+            chain_edges = list(chain.edges)
+            for edge in chain_edges:
+                J[max(edge), min(edge)] = -chain_strength
             for j in range(i):
                 number_of_connections = 0
                 for node_i in minor[i]:
@@ -80,7 +87,7 @@ class graph:
                 for node_i in minor[i]:
                     for node_j in used_graph.neighbors(node_i):
                         if node_j in minor[j]:
-                            J[(node_i, node_j)] = logical_J[(i,j)]/number_of_connections
+                            J[(max(node_i, node_j), min(node_i, node_j))] = logical_J[(i,j)]/number_of_connections
             
         
         c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
@@ -94,8 +101,11 @@ class graph:
         J_range = 1.0
         J_max = max(J_values)
         J_min = min(J_values)
+    
+
+    
         
-        scale = max([max([h_max/h_range, 0]), max([-h_min/h_range, 0]), max([J_max/J_range, 0]), max([-J_min/J_range, 0]), chain_strength/J_range])
+        scale = max([max([h_max/h_range, 0]), max([-h_min/h_range, 0]), max([J_max/J_range, 0]), max([-J_min/J_range, 0])])
         
         for i in range(number_of_physical_qubits):
             h[(used_nodes[i])] /= scale
@@ -137,7 +147,7 @@ class graph:
         c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
         
         h_values = h.values() 
-        h_range = 2.0
+        h_range = 4.0
         h_max = max(h_values)
         h_min = min(h_values)
         J_values = J.values()
@@ -317,8 +327,7 @@ def fileToNetwork (nameIn):
         nv, ne = [int(x) for x in next(file).split()]
         for line in file:
             e = line.split()
-            edge = [int(e[0]), int(e[1])]
-            network.add_edge(*edge)
+            network.add_edge(int(e[0]), int(e[1]))
     
     return network
 
@@ -404,7 +413,98 @@ def decimalToBinary (nv, d):
     return b
     
 
+def generalHamiltonian (target_graph, minor, logical_h, logical_J, RCS):
+    number_of_logical_qubits = len(logical_h)
+    number_of_physical_qubits = 0
+    for logical_qubit in minor:
+        number_of_physical_qubits += len(minor[logical_qubit])
     
+    dim = pow(2, number_of_physical_qubits)
+    Hamiltonian = np.zeros(dim)
+    state = [-1 for i in range(number_of_physical_qubits)]
+    physical_h = defaultdict(int)
+    physical_J = defaultdict(int)
+    
+    for i in range(number_of_physical_qubits):
+        physical_h[(i)] = 0.0
+        for j in range(i):
+            physical_J[(i, j)] = 0.0
+    
+    for logical_qubit in range(number_of_logical_qubits):
+        chain_length = float(len(minor[logical_qubit]))
+        for physical_qubit in minor[logical_qubit]:
+            physical_h[(physical_qubit)] = logical_h[(logical_qubit)]/chain_length 
+    
+
+    # logical_J_max = max(logical_J.values())
+    # logical_J_min = min(logical_J.values())
+    # logical_h_max = max(logical_h.values())
+    # logical_h_min = min(logical_h.values())
+    # chain_strength = max(logical_J_max, -logical_J_min, logical_h_max, -logical_h_min) * RCS
+    
+    
+    for i in range(number_of_logical_qubits):
+        for j in range(i):
+            number_of_connections = 0
+            for physical_qubit_i in minor[i]:
+                for physical_qubit_j in target_graph.neighbors(physical_qubit_i):
+                    if physical_qubit_j in minor[j]:
+                        number_of_connections += 1
+            for physical_qubit_i in minor[i]:
+                for physical_qubit_j in target_graph.neighbors(physical_qubit_i):
+                    if physical_qubit_j in minor[j]:
+                        physical_J[(max(physical_qubit_i, physical_qubit_j), min(physical_qubit_i, physical_qubit_j))] = logical_J[(i,j)]/number_of_connections
+    
+    physical_J_max = max(physical_J.values())
+    physical_J_min = min(physical_J.values())
+    physical_h_max = max(physical_h.values())
+    physical_h_min = min(physical_h.values())
+    #chain_strength = max(physical_J_max, -physical_J_min, physical_h_max, -physical_h_min) * RCS
+    chain_strength = max(physical_J_max, -physical_J_min) * RCS
+    
+    for i in range(number_of_logical_qubits):
+        chain = target_graph.subgraph(minor[i])
+        chain_edges = list(chain.edges)
+        for edge in chain_edges:
+            physical_J[max(edge), min(edge)] = -chain_strength
+            
+    print(physical_h)
+    print(physical_J)
+    
+    h_values = physical_h.values() 
+    h_range = 2.0
+    h_max = max(h_values)
+    h_min = min(h_values)
+    J_values = physical_J.values()
+    J_range = 1.0
+    J_max = max(J_values)
+    J_min = min(J_values)
+
+    
+    scale = max([max([h_max/h_range, 0]), max([-h_min/h_range, 0]), max([J_max/J_range, 0]), max([-J_min/J_range, 0])])
+    
+    for i in range(number_of_physical_qubits):
+        physical_h[(i)] /= scale
+    for i in range(number_of_physical_qubits):
+        for j in range(i):
+            physical_J[(i, j)] /= scale
+    
+    
+    for k in range(dim):     
+        for i in range(number_of_physical_qubits):
+            Hamiltonian[k] += physical_h[i]*state[i]
+            for j in range(i):
+                Hamiltonian[k] += physical_J[(i, j)]*state[i]*state[j]
+        
+        nextIsing(state)
+    
+    return Hamiltonian
+    
+
+
+
+
+
 
 # networkG = nx.fast_gnp_random_graph(120, 0.6)
 # networkToFile(networkG, "graph4.txt")

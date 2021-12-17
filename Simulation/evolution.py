@@ -667,7 +667,7 @@ def evolutionABRK2(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t)
         #     for k in range(dim):
         #         probability[k] = (np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k]))/float(dim)
 
-        #     plt.xlim(0, dim - 1)9
+        #     plt.xlim(0, dim - 1)
         #     plt.ylim(0, 1)
         #     plt.plot(xAxis, probability, color = 'black')
         #     plt.pause(0.0000001)
@@ -862,9 +862,8 @@ def adiabaticEvolutionAB(dim, H0, H1, A, B, adiabatic, gs, t_f):
                 np.imag(vec[i])*np.imag(vec[i])
 
 
-# Spectra over time
+# Spectra over time and minimum gap
 def spectra(dim, H0, H1, A, B, gs, divisions, number_of_bands):
-    sVector = np.linspace(0, 1, divisions)
     degeneracy = len(gs)
     minimum_gap = 1e100
     sVector = np.linspace(0, 1, divisions)
@@ -880,7 +879,29 @@ def spectra(dim, H0, H1, A, B, gs, divisions, number_of_bands):
     return minimum_gap, energies
 
 
-
+# Compute epsilon
+def epsilon(dim, H0, H1, A, B, gs, divisions, delta_t):
+    if delta_t > 1.0/(divisions - 1):
+        delta_t = 1.0/divisions
+    sVector = np.linspace(0, 1, divisions)
+    max_epsilon = 0
+    degeneracy = len(gs)
+    
+    for i in range(1, divisions - 1):
+        H = A(sVector[i])*H0 + B(sVector[i])*H1
+        w, v = np.linalg.eigh(H)
+        vec_gs = np.conjugate(v[:, 0])
+        vec_es = v[:, degeneracy]
+        A_prime = (A(sVector[i]+delta_t) - A(sVector[i]-delta_t))/(2*delta_t)
+        B_prime = (B(sVector[i]+delta_t) - B(sVector[i]-delta_t))/(2*delta_t)
+        H_prime = A_prime*H0 + B_prime*H1
+        
+        aux_epsilon = np.abs(np.dot(vec_gs, np.dot(H_prime, vec_es)))
+        if (aux_epsilon > max_epsilon):
+            max_epsilon = aux_epsilon
+    
+    return max_epsilon
+        
 
 # Compute the ground states of a given Hamiltonian
 def groundState(dim, H):

@@ -78,10 +78,10 @@ max_strength = max(J_max, J_min)
 # Do the embedding
 select = 0
 if select == 0:
-    c1 = dnx.chimera_graph(1)
+    c1 = dnx.chimera_graph(3)
     networkToFile(c1, "chimera.txt")
     plt.figure()
-    dnx.draw_chimera(c1)
+    dnx.draw_chimera(c1, node_size=20)
     filename = "Chimera_graph.png"
     plt.savefig(filename, bbox_inches='tight')
     K4 = nx.complete_graph(4)
@@ -100,7 +100,7 @@ elif select == 1:
     p1 = dnx.pegasus_graph(16, fabric_only=False)
     networkToFile(p1, "pegasus.txt")
     plt.figure()
-    dnx.draw_pegasus(p1)
+    dnx.draw_pegasus(p1, node_size=20)
     filename = "Pegasus_graph.png"
     plt.savefig(filename, bbox_inches='tight')
     K4 = nx.complete_graph(4)
@@ -115,4 +115,5 @@ elif select == 1:
                                     annealing_time=20.0,
                                     label='Test - Clique Problem')
     dwave.inspector.show(sampleset)
+
 

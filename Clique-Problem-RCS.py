@@ -29,13 +29,14 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 from Functions import fileToNetwork, networkToFile
 from dwave.system.samplers import DWaveSampler, LeapHybridSampler, LeapHybridBQMSampler
-from dwave.system.composites import EmbeddingComposite
+from dwave.system.composites import EmbeddingComposite, FixedEmbeddingComposite
 import dwave.inspector
+import minorminer as mm
 
 
 # Graph parameters
-# G = fileToNetwork("graph1.txt")
-G = nx.fast_gnp_random_graph(7, 0.5)
+G = fileToNetwork("graph2.txt")
+# G = nx.fast_gnp_random_graph(7, 0.5)
 K = nx.graph_clique_number(G) #Size of the clique we are searching
 print("Clique number: " + str(K))
 nv = nx.number_of_nodes(G)
@@ -43,17 +44,17 @@ ne = nx.number_of_edges(G)
 
 
 # Quantum parameters 
-min_annealing_time = 20.
-max_annealing_time = 20.
+min_annealing_time = 10.
+max_annealing_time = 10.
 num_annealing_time = 1
 annealing_steps = np.linspace(np.log10(min_annealing_time), np.log10(max_annealing_time), num_annealing_time, dtype=float)
 annealing_times = np.power(10, annealing_steps)
-min_RCS = 0.1
-max_RCS = 20.0
+min_RCS = 0.6
+max_RCS = 0.6
 num_RCS = 1
 RCS = np.linspace(min_RCS, max_RCS, num_RCS)
 probability_of_success = np.empty((2, num_RCS))
-num_reads = 100
+num_reads = 200
 B = 1.0
 A = (K + 1)*B
 
@@ -82,25 +83,35 @@ J_min = np.absolute(min(J.values()))
 max_strength = max(J_max, J_min)
 
 
+chimera = dnx.chimera_graph(3)
+Kn = nx.complete_graph(nv)
+chimera_embedding = mm.find_embedding(Kn, chimera, random_seed=1)
+
+pegasus = dnx.pegasus_graph(16, fabric_only=False)
+Kn = nx.complete_graph(nv)
+pegasus_embedding = mm.find_embedding(Kn, pegasus, random_seed=1)
+
 
 # Run the annealing with the desired sampler
 for i in range(num_RCS):
-    for select in [0, 1]:
+    for select in [0]:
         if (select == 0):
-            qpu = DWaveSampler(solver={'topology__type': 'chimera'}, auto_scale=True)
-            sampler = EmbeddingComposite(qpu)
+            qpu = DWaveSampler(solver={'topology__type': 'chimera'})
+            sampler = FixedEmbeddingComposite(qpu, chimera_embedding)
             sampleset = sampler.sample_ising(h, J,
                                             chain_strength=RCS[i]*max_strength,
                                             num_reads=num_reads,
+                                            auto_scale=True,
                                             annealing_time=20.0,
                                             label='Test - Clique Problem')
             #dwave.inspector.show(sampleset)
         elif (select == 1):
-            qpu = DWaveSampler(solver={'topology__type': 'pegasus'}, auto_scale=True)
-            sampler = EmbeddingComposite(qpu)
+            qpu = DWaveSampler(solver={'topology__type': 'pegasus'})
+            sampler = FixedEmbeddingComposite(qpu, pegasus_embedding)
             sampleset = sampler.sample_ising(h, J,
                                             chain_strength=RCS[i]*max_strength,
                                             num_reads=num_reads,
+                                            auto_scale=True,
                                             annealing_time=20.0,
                                             label='Test - Clique Problem')
             #dwave.inspector.show(sampleset)
@@ -133,7 +144,7 @@ for i in range(num_RCS):
         if (constant == -sampleset.first.energy): 
             print(str(K) + '-clique found with RCS = ' + str(RCS[i]) + ':', state, '\n\n')
 
-            groundStateSet = sampleset.lowest(atol=5.0)
+            groundStateSet = sampleset.lowest(atol=0.1)
             probability_of_success[select][i] = float(np.sum(groundStateSet.record.num_occurrences))/float(num_reads)
 
         else: 
@@ -165,8 +176,8 @@ plt.xlabel("Relative chain strength")
 plt.ylabel("Probability of success")
 plt.ylim([0,1])
 plt.plot(xAxis, probability_of_success[0], color='blue', label='DW_6000Q_6')
-plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4.1')
-plt.legend(loc='best')
+# plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4.1')
+# plt.legend(loc='best')
 filename = "Probabilty of success for different chain strengths.png"
 plt.savefig(filename, bbox_inches='tight')
 

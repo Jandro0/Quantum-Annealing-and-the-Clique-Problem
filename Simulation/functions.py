@@ -44,29 +44,24 @@ def f(t, y, H0, H1, A, B, t_f):
 
 
 
-# t_max = 10
-# h = 0.01
-# N = int(t_max/h)
-# y = np.empty(N)
-# y[0] = 1
-# t = 0.
-# for n in range(N - 1):
-#     t += h
-#     k1 = f(t, y[n])
-#     k2 = f(t + h/2, y[n] + h*k1/2)
-#     k3 = f(t + h/2, y[n] + h*k2/2)
-#     k4 = f(t + h, y[n] + h*k3)
-#     y[n + 1] = y[n] + h*(k1 + 2*k2 + 2*k3 + k4)/6
-    
 
-# xAxis = np.linspace(0, t_max, N)
-# z = (1/4)*(-2*xAxis + 5*np.exp(2*xAxis) - 1)
 
-# plt.figure(1)
-# plt.plot(xAxis, z)
-# plt.plot(xAxis, y)
-    
-    
+
+# A, B = schedule("Advantage_system4.1.txt")
+   
+
+# plt.figure()
+# xAxis = np.linspace(0, 1, 200)
+# plt.xlim([0,1])
+# plt.xlabel("Scaled annealing time s=t/T")
+# plt.ylabel("Energy/h (GHz)")
+# A_values = A(xAxis)
+# B_values = B(xAxis)
+# plt.plot(xAxis, A_values, label='A(s)')
+# plt.plot(xAxis, B_values, label='B(s)')
+# plt.legend(loc='best')
+# plt.savefig("Advantage schedule", bbox_inches='tight', dpi=300)
+# plt.show()
     
     
     
