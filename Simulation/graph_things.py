@@ -60,24 +60,20 @@ class graph:
                 if (i > j):
                     logical_J[(i,j)] -= B/4.
         
-        logical_J_values = logical_J.values()
-        logical_J_max = max(logical_J_values)
-        logical_J_min = min(logical_J_values)
-        logical_h_max = max(logical_h.values())
-        logical_h_min = min(logical_h.values())
-        chain_strength = max(logical_J_max, -logical_J_min, logical_h_max, -logical_h_min) * RCS
+        # logical_J_values = logical_J.values()
+        # logical_J_max = max(logical_J_values)
+        # logical_J_min = min(logical_J_values)
+        # logical_h_max = max(logical_h.values())
+        # logical_h_min = min(logical_h.values())
+        # chain_strength = max(logical_J_max, -logical_J_min, logical_h_max, -logical_h_min) * RCS
         
         J = defaultdict(int)
         for i in range(number_of_physical_qubits):
             for j in range(i):
                 J[(used_nodes[i], used_nodes[j])] = 0
         
-
+        
         for i in range(self.nv):
-            chain = used_graph.subgraph(minor[i])
-            chain_edges = list(chain.edges)
-            for edge in chain_edges:
-                J[max(edge), min(edge)] = -chain_strength
             for j in range(i):
                 number_of_connections = 0
                 for node_i in minor[i]:
@@ -93,18 +89,31 @@ class graph:
         c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
         
         
-        h_values = h.values() 
         h_range = 2.0
+        J_range = 1.0
+        J_values = J.values()
+        J_max = max(J_values)
+        J_min = min(J_values)
+        h_max = max(h.values())
+        h_min = min(h.values())
+        chain_strength = max(J_max, -J_min, h_max/h_range, -h_min/h_range) * RCS
+        
+        for i in range(self.nv):
+            chain = used_graph.subgraph(minor[i])
+            chain_edges = list(chain.edges)
+            for edge in chain_edges:
+                J[max(edge), min(edge)] = -chain_strength
+        
+        
+        h_values = h.values() 
+        
         h_max = max(h_values)
         h_min = min(h_values)
         J_values = J.values()
-        J_range = 1.0
         J_max = max(J_values)
         J_min = min(J_values)
     
-
     
-        
         scale = max([max([h_max/h_range, 0]), max([-h_min/h_range, 0]), max([J_max/J_range, 0]), max([-J_min/J_range, 0])])
         
         for i in range(number_of_physical_qubits):
@@ -147,7 +156,7 @@ class graph:
         c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
         
         h_values = h.values() 
-        h_range = 4.0
+        h_range = 2.0
         h_max = max(h_values)
         h_min = min(h_values)
         J_values = J.values()
@@ -402,16 +411,27 @@ def nextIsing (state):
         n += 1
  
 
-def decimalToBinary (nv, d):
-    b = [0 for i in range(nv)]
+def decimalToBinary (n, d):
+    b = [0 for i in range(n)]
     
-    for i in range(nv):
+    for i in range(n):
         mod = d % 2
-        b[nv - i - 1] = int(mod)
+        b[n - i - 1] = int(mod)
         d = (d - mod)/2
     
     return b
+
+def binaryToDecimal (b):
+    n = len(b)
+    d = 0
     
+    for i in range(n):
+        d += b[n - i - 1]*pow(2, i)
+    
+    return d
+
+
+
 
 def generalHamiltonian (target_graph, minor, logical_h, logical_J, RCS):
     number_of_logical_qubits = len(logical_h)
@@ -455,31 +475,28 @@ def generalHamiltonian (target_graph, minor, logical_h, logical_J, RCS):
                     if physical_qubit_j in minor[j]:
                         physical_J[(max(physical_qubit_i, physical_qubit_j), min(physical_qubit_i, physical_qubit_j))] = logical_J[(i,j)]/number_of_connections
     
+    h_range = 2.0
+    J_range = 1.0
     physical_J_max = max(physical_J.values())
     physical_J_min = min(physical_J.values())
     physical_h_max = max(physical_h.values())
     physical_h_min = min(physical_h.values())
-    #chain_strength = max(physical_J_max, -physical_J_min, physical_h_max, -physical_h_min) * RCS
-    chain_strength = max(physical_J_max, -physical_J_min) * RCS
+    chain_strength = max(physical_J_max, -physical_J_min, physical_h_max/h_range, -physical_h_min/h_range) * RCS
+    #chain_strength = max(physical_J_max, -physical_J_min) * RCS
     
     for i in range(number_of_logical_qubits):
         chain = target_graph.subgraph(minor[i])
         chain_edges = list(chain.edges)
         for edge in chain_edges:
-            physical_J[max(edge), min(edge)] = -chain_strength
+            physical_J[(max(edge), min(edge))] = -chain_strength
             
-    print(physical_h)
-    print(physical_J)
     
     h_values = physical_h.values() 
-    h_range = 2.0
     h_max = max(h_values)
     h_min = min(h_values)
     J_values = physical_J.values()
-    J_range = 1.0
     J_max = max(J_values)
     J_min = min(J_values)
-
     
     scale = max([max([h_max/h_range, 0]), max([-h_min/h_range, 0]), max([J_max/J_range, 0]), max([-J_min/J_range, 0])])
     
@@ -501,8 +518,20 @@ def generalHamiltonian (target_graph, minor, logical_h, logical_J, RCS):
     return Hamiltonian
     
 
-
-
+def evaluateHamiltonian (n, h, J):
+    dim = pow(2, n)
+    Hamiltonian = np.zeros(dim)
+    state = [-1 for i in range(n)]
+    
+    for k in range(dim):     
+        for i in range(n):
+            Hamiltonian[k] += h[i]*state[i]
+            for j in range(i):
+                Hamiltonian[k] += J[(i, j)]*state[i]*state[j]
+        
+        nextIsing(state)
+    
+    return Hamiltonian
 
 
 

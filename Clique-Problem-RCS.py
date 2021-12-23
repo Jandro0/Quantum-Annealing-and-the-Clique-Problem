@@ -27,7 +27,7 @@ import matplotlib
 matplotlib.use("agg")
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from Functions import fileToNetwork, networkToFile
+from Functions import fileToNetwork, networkToFile, physical_hJ, evaluate_M
 from dwave.system.samplers import DWaveSampler, LeapHybridSampler, LeapHybridBQMSampler
 from dwave.system.composites import EmbeddingComposite, FixedEmbeddingComposite
 import dwave.inspector
@@ -57,6 +57,7 @@ probability_of_success = np.empty((2, num_RCS))
 num_reads = 200
 B = 1.0
 A = (K + 1)*B
+token = "DEV-fd3f1d6b05742414a33e65d30d4ac65edc88415b"
 
 
 
@@ -75,14 +76,7 @@ for i in range(nv):
 
 constant = A*K*K + (B*K*(K-1) - A*(2*K-1)*nv)/2. + (A*nv*(nv-1) - B*ne)/4.
 
-# Compute the maximum strength 
-h_max = np.absolute(max(h.values()))
-h_min = np.absolute(min(h.values()))
-J_max = np.absolute(max(J.values()))
-J_min = np.absolute(min(J.values()))
-max_strength = max(J_max, J_min)
-
-
+# Compute minor-embeddings
 chimera = dnx.chimera_graph(3)
 Kn = nx.complete_graph(nv)
 chimera_embedding = mm.find_embedding(Kn, chimera, random_seed=1)
@@ -91,25 +85,32 @@ pegasus = dnx.pegasus_graph(16, fabric_only=False)
 Kn = nx.complete_graph(nv)
 pegasus_embedding = mm.find_embedding(Kn, pegasus, random_seed=1)
 
+# Compute values of M
+physical_chimera_h, physical_chimera_J = physical_hJ(chimera, chimera_embedding, h, J)
+physical_pegasus_h, physical_pegasus_J = physical_hJ(pegasus, pegasus_embedding, h, J)
+M_chimera = evaluate_M(physical_chimera_h, physical_chimera_J, 2.0, 1.0)
+M_pegasus = evaluate_M(physical_pegasus_h, physical_chimera_J, 4.0, 1.0)
+
+
 
 # Run the annealing with the desired sampler
 for i in range(num_RCS):
     for select in [0]:
         if (select == 0):
-            qpu = DWaveSampler(solver={'topology__type': 'chimera'})
+            qpu = DWaveSampler(solver={'topology__type': 'chimera'}, token=token)
             sampler = FixedEmbeddingComposite(qpu, chimera_embedding)
             sampleset = sampler.sample_ising(h, J,
-                                            chain_strength=RCS[i]*max_strength,
+                                            chain_strength=RCS[i]*M_chimera,
                                             num_reads=num_reads,
                                             auto_scale=True,
                                             annealing_time=20.0,
                                             label='Test - Clique Problem')
-            #dwave.inspector.show(sampleset)
+            dwave.inspector.show(sampleset)
         elif (select == 1):
-            qpu = DWaveSampler(solver={'topology__type': 'pegasus'})
+            qpu = DWaveSampler(solver={'topology__type': 'pegasus'}, token=token)
             sampler = FixedEmbeddingComposite(qpu, pegasus_embedding)
             sampleset = sampler.sample_ising(h, J,
-                                            chain_strength=RCS[i]*max_strength,
+                                            chain_strength=RCS[i]*M_pegasus,
                                             num_reads=num_reads,
                                             auto_scale=True,
                                             annealing_time=20.0,
@@ -117,10 +118,10 @@ for i in range(num_RCS):
             #dwave.inspector.show(sampleset)
         elif (select == 2):
             sampler = LeapHybridSampler()
-            sampleset = sampler.sample_ising(h, J)
+            sampleset = sampler.sample_ising(h, J, token=token)
         elif (select == 3):
             sampler = LeapHybridBQMSampler()
-            sampleset = sampler.sample_ising(h, J)
+            sampleset = sampler.sample_ising(h, J, token=token)
 
 
         # Print results
@@ -182,6 +183,9 @@ filename = "Probabilty of success for different chain strengths.png"
 plt.savefig(filename, bbox_inches='tight')
 
 
-
+filename = "Success rate.txt"
+with open(filename, 'w') as file:
+    for i in range(num_RCS):
+        file.write(str(RCS[i]) + ' ' + str(probability_of_success[0][i]) + ' ' + str(probability_of_success[1][i]))
 
 

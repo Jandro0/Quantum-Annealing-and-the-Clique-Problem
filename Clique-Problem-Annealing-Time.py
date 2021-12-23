@@ -53,7 +53,7 @@ probability_of_success = np.empty((2, num_annealing_time))
 num_reads = 100
 B = 1.0
 A = (K + 1)*B
-
+token = "DEV-fd3f1d6b05742414a33e65d30d4ac65edc88415b"
 
 
 # Initialize matrix and fill in appropiate values
@@ -92,7 +92,7 @@ pegasus_embedding = mm.find_embedding(Kn, pegasus, random_seed=1)
 for i in range(num_annealing_time):
     for select in [0, 1]:
         if (select == 0):
-            qpu = DWaveSampler(solver={'topology__type': 'chimera'})
+            qpu = DWaveSampler(solver={'topology__type': 'chimera'}, token=token)
             sampler = FixedEmbeddingComposite(qpu, chimera_embedding)
             sampleset = sampler.sample_ising(h, J,
                                             num_reads=num_reads,
@@ -102,7 +102,7 @@ for i in range(num_annealing_time):
                                             label='Test - Clique Problem')
             #dwave.inspector.show(sampleset)
         elif (select == 1):
-            qpu = DWaveSampler(solver={'topology__type': 'pegasus'})
+            qpu = DWaveSampler(solver={'topology__type': 'pegasus'}, token=token)
             sampler = FixedEmbeddingComposite(qpu,pegasus_embedding)
             sampleset = sampler.sample_ising(h, J,                
                                             num_reads=num_reads,
@@ -174,6 +174,8 @@ plt.plot(xAxis, probability_of_success[1], color='red', label='Advantage_system4
 plt.legend(loc='best')
 filename = "Probabilty of success for different annealing times.png"
 plt.savefig(filename, bbox_inches='tight')
+
+
 
 
 
