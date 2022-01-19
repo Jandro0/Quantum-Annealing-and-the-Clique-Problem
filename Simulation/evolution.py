@@ -1,3 +1,6 @@
+# This file includes all evolution-related functions
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -68,179 +71,6 @@ def matrixTensor(A, B):
 
     return C
 
-
-#-------------------Evolutions with Gamma (Crank-Nicolson)-----------------------#
-# Simulate the evolution and plot probability coeffiecients over time
-def evolutionCN2(dim, H0, H1, psi, Gamma, successProbability, gs, t_f, delta_t):
-    t = 0
-    iteration = 0
-    probability = np.empty(dim)
-    xAxis = np.linspace(0, dim - 1, dim)
-
-    successProbability[0] = np.append(successProbability[0], 0.)
-    for i in gs:
-        successProbability[0][iteration] += np.real(psi[i])*np.real(
-            psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-    successProbability[0][iteration] = successProbability[0][iteration] / \
-        float(dim)
-
-    # plot = plt.figure()
-
-    while (t < t_f):
-        H = H1 + Gamma(t) * H0
-        psi = timeplus1(dim, H, psi, delta_t)
-        t += delta_t
-        iteration += 1
-
-        successProbability[0] = np.append(successProbability[0], 0.)
-        for i in gs:
-            successProbability[0][iteration] += np.real(psi[i])*np.real(
-                psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-        successProbability[0][iteration] = successProbability[0][iteration] / \
-            float(dim)
-
-        # if (iteration%50 == 0):
-        #     for k in range(dim):
-        #         probability[k] = (np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k]))/float(dim)
-
-        #     plt.xlim(0, dim - 1)9
-        #     plt.ylim(0, 1)
-        #     plt.plot(xAxis, probability, color = 'black')
-        #     plt.pause(0.0000001)
-        #     plt.clf()
-
-        #     print(str(t) + '   ' + str(successProbability[0][iteration]))
-
-    return psi
-
-
-# Simulate the evolution with fixed time
-def evolutionCN3(dim, H0, H1, psi, Gamma, successProbability, gs, t_f, delta_t):
-    t = 0
-    iteration = 0
-
-    successProbability[0] = np.append(successProbability[0], 0.)
-    for i in gs:
-        successProbability[0][0] += np.real(psi[i]) * \
-            np.real(psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-    successProbability[0][0] = successProbability[0][0]/float(dim)
-
-    while (t < t_f):
-        H = H1 + Gamma(t) * H0
-        psi = timeplus1(dim, H, psi, delta_t)
-        t += delta_t
-        iteration += 1
-
-        successProbability[0] = np.append(successProbability[0], 0.)
-        for i in gs:
-            successProbability[0][iteration] += np.real(psi[i])*np.real(
-                psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-        successProbability[0][iteration] = successProbability[0][iteration] / \
-            float(dim)
-
-    return psi
-
-
-# Simulate the evolution until a desired probability is achieved
-def evolutionCN4(dim, H0, H1, psi, Gamma, successProbability, pSuccess, gs, t_f, delta_t):
-    t = 0
-    iteration = 0
-
-    successProbability[0] = np.append(successProbability[0], 0.)
-    for i in gs:
-        successProbability[0][0] += np.real(psi[i]) * \
-            np.real(psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-    successProbability[0][0] = successProbability[0][0]/float(dim)
-
-    while (successProbability[0][iteration] < pSuccess):
-        H = H1 + Gamma(t) * H0
-        psi = timeplus1(dim, H, psi, delta_t)
-        t += delta_t
-        iteration += 1
-
-        successProbability[0] = np.append(successProbability[0], 0.)
-        for i in gs:
-            successProbability[0][iteration] += np.real(psi[i])*np.real(
-                psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-        successProbability[0][iteration] = successProbability[0][iteration] / \
-            float(dim)
-
-    t_f[0] = t
-
-    return psi
-
-
-# Simulate the evolution and compute the overlap with the instantaneous ground state
-def evolutionCN5(dim, H0, H1, psi, Gamma, overlap, gs, t_f, delta_t):
-    t = 0
-    degeneracy = len(gs)
-
-    w, v = np.linalg.eigh(H1 + Gamma(t) * H0)
-    prod = 0
-    for i in range(degeneracy):
-        vec = np.conjugate(v[:, i])
-        dot = np.dot(psi, vec)
-        prod += (np.real(dot)*np.real(dot) +
-                 np.imag(dot)*np.imag(dot))/float(dim)
-
-    overlap[0] = np.append(overlap[0], prod)
-
-    while (t < t_f):
-        H = H1 + Gamma(t) * H0
-        psi = timeplus1(dim, H, psi, delta_t)
-        t += delta_t
-
-        w, v = np.linalg.eigh(H)
-        prod = 0
-        for i in range(degeneracy):
-            vec = np.conjugate(v[:, i])
-            dot = np.dot(psi, vec)
-            prod += (np.real(dot)*np.real(dot) +
-                     np.imag(dot)*np.imag(dot))/float(dim)
-        overlap[0] = np.append(overlap[0], prod)
-
-    return psi
-
-
-# Simulate the evolution and compare with adiabatic evolution
-def evolutionCN6(dim, H0, H1, psi, Gamma, energy, overlap, t_f, delta_t, number_of_overlaps, number_of_eigenstates):
-    t = 0
-    delta_t_overlap = int(t_f/(delta_t*number_of_overlaps))
-    t_for_overlap = 0
-    i = 0
-
-    H = H1 + Gamma(0) * H0
-    w, v = np.linalg.eigh(H)
-    for k in range(number_of_eigenstates):
-        vec = np.conjugate(v[:, k])
-        dot = np.dot(psi, vec)
-        overlap[0][k][0] = (np.real(dot)*np.real(dot) +
-                            np.imag(dot)*np.imag(dot))/float(dim)
-        energy[0][k][0] = w[k]
-
-    while (t < t_f):
-        H = H1 + Gamma(t) * H0
-        psi = timeplus1(dim, H, psi, delta_t)
-        t += delta_t
-        t_for_overlap += 1
-
-        if (t_for_overlap % delta_t_overlap == 0 and i < number_of_overlaps - 1):
-            i += 1
-            w, v = np.linalg.eigh(H)
-            for k in range(number_of_eigenstates):
-                vec = np.conjugate(v[:, k])
-                dot = np.dot(psi, vec)
-                overlap[0][k][i] = (
-                    np.real(dot)*np.real(dot) + np.imag(dot)*np.imag(dot))/float(dim)
-                energy[0][k][i] = w[k]
-
-    return psi
 
 
 #-------------------Evolutions with A(t), B(t) (Crank-Nicolson)-------------------#
@@ -420,213 +250,9 @@ def evolutionABCN6(dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, number
     return psi
 
 
-#-------------------------Evolutions with Gamma (Runge-Kutta)--------------------------#
-# Simulate the evolution and plot probability coeffiecients over time
-def evolutionRK2(dim, H0, H1, psi, Gamma, successProbability, gs, t_f, delta_t):
-    t = 0
-    iteration = 0
-    probability = np.empty(dim)
-    xAxis = np.linspace(0, dim - 1, dim)
-
-    successProbability[0] = np.append(successProbability[0], 0.)
-    for i in gs:
-        successProbability[0][iteration] += np.real(psi[i])*np.real(
-            psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-    successProbability[0][iteration] = successProbability[0][iteration] / \
-        float(dim)
-
-    # plot = plt.figure()
-
-    while (t < t_f):
-        k1 = (0. - 1.j)*np.matmul(H1 + Gamma(t)*H0, psi)
-        k2 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t))
-                                  * H0, psi + float(delta_t)*k3)
-        psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
-        t += delta_t
-        iteration += 1
-
-        successProbability[0] = np.append(successProbability[0], 0.)
-        for i in gs:
-            successProbability[0][iteration] += np.real(psi[i])*np.real(
-                psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-        successProbability[0][iteration] = successProbability[0][iteration] / \
-            float(dim)
-
-        # if (iteration%50 == 0):
-        #     for k in range(dim):
-        #         probability[k] = (np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k]))/float(dim)
-
-        #     plt.xlim(0, dim - 1)9
-        #     plt.ylim(0, 1)
-        #     plt.plot(xAxis, probability, color = 'black')
-        #     plt.pause(0.0000001)
-        #     plt.clf()
-
-        #     print(str(t) + '   ' + str(successProbability[0][iteration]))
-
-    return psi
 
 
-# Simulate the evolution with fixed time
-def evolutionRK3(dim, H0, H1, psi, Gamma, successProbability, gs, t_f, delta_t):
-    t = 0
-    iteration = 0
-
-    successProbability[0] = np.append(successProbability[0], 0.)
-    for i in gs:
-        successProbability[0][0] += np.real(psi[i]) * \
-            np.real(psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-    successProbability[0][0] = successProbability[0][0]/float(dim)
-
-    while (t < t_f):
-        k1 = (0. - 1.j)*np.matmul(H1 + Gamma(t)*H0, psi)
-        k2 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t))
-                                  * H0, psi + float(delta_t)*k3)
-        psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
-        t += delta_t
-        iteration += 1
-
-        successProbability[0] = np.append(successProbability[0], 0.)
-        for i in gs:
-            successProbability[0][iteration] += np.real(psi[i])*np.real(
-                psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-        successProbability[0][iteration] = successProbability[0][iteration] / \
-            float(dim)
-
-    return psi
-
-
-# Simulate the evolution until a desired probability is achieved
-def evolutionRK4(dim, H0, H1, psi, Gamma, successProbability, pSuccess, gs, t_f, delta_t):
-    t = 0
-    iteration = 0
-
-    successProbability[0] = np.append(successProbability[0], 0.)
-    for i in gs:
-        successProbability[0][0] += np.real(psi[i]) * \
-            np.real(psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-    successProbability[0][0] = successProbability[0][0]/float(dim)
-
-    while (successProbability[0][iteration] < pSuccess):
-        k1 = (0. - 1.j)*np.matmul(H1 + Gamma(t)*H0, psi)
-        k2 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t))
-                                  * H0, psi + float(delta_t)*k3)
-        psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
-        t += delta_t
-        iteration += 1
-
-        successProbability[0] = np.append(successProbability[0], 0.)
-        for i in gs:
-            successProbability[0][iteration] += np.real(psi[i])*np.real(
-                psi[i]) + np.imag(psi[i])*np.imag(psi[i])
-
-        successProbability[0][iteration] = successProbability[0][iteration] / \
-            float(dim)
-
-    t_f[0] = t
-
-    return psi
-
-
-# Simulate the evolution and compute the overlap with the instantaneous ground state
-def evolutionRK5(dim, H0, H1, psi, Gamma, overlap, gs, t_f, delta_t):
-    t = 0
-    degeneracy = len(gs)
-
-    w, v = np.linalg.eigh(H1 + Gamma(t) * H0)
-    prod = 0
-    for i in range(degeneracy):
-        vec = np.conjugate(v[:, i])
-        dot = np.dot(psi, vec)
-        prod += (np.real(dot)*np.real(dot) +
-                 np.imag(dot)*np.imag(dot))/float(dim)
-
-    overlap[0] = np.append(overlap[0], prod)
-
-    while (t < t_f):
-        H = H1 + Gamma(t) * H0
-        k1 = (0. - 1.j)*np.matmul(H1 + Gamma(t)*H0, psi)
-        k2 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t))
-                                  * H0, psi + float(delta_t)*k3)
-        psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
-        t += delta_t
-
-        w, v = np.linalg.eigh(H)
-        prod = 0
-        for i in range(degeneracy):
-            vec = np.conjugate(v[:, i])
-            dot = np.dot(psi, vec)
-            prod += (np.real(dot)*np.real(dot) +
-                     np.imag(dot)*np.imag(dot))/float(dim)
-        overlap[0] = np.append(overlap[0], prod)
-
-    return psi
-
-
-# Simulate the evolution and compare with adiabatic evolution
-def evolutionRK6(dim, H0, H1, psi, Gamma, energy, overlap, t_f, delta_t, number_of_overlaps, number_of_eigenstates):
-    t = 0
-    delta_t_overlap = int(t_f/(delta_t*number_of_overlaps))
-    t_for_overlap = 0
-    i = 0
-
-    H = H1 + Gamma(0) * H0
-    w, v = np.linalg.eigh(H)
-    for k in range(number_of_eigenstates):
-        vec = np.conjugate(v[:, k])
-        dot = np.dot(psi, vec)
-        overlap[0][k][0] = (np.real(dot)*np.real(dot) +
-                            np.imag(dot)*np.imag(dot))/float(dim)
-        energy[0][k][0] = w[k]
-
-    while (t < t_f):
-        H = H1 + Gamma(t) * H0
-        k1 = (0. - 1.j)*np.matmul(H1 + Gamma(t)*H0, psi)
-        k2 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k1)
-        k3 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t/2))
-                                  * H0, psi + float(delta_t/2)*k2)
-        k4 = (0. - 1.j)*np.matmul(H1 + Gamma(t + float(delta_t))
-                                  * H0, psi + float(delta_t)*k3)
-        psi = timeplus1RK(dim, psi, k1, k2, k3, k4, delta_t)
-        t += delta_t
-        t_for_overlap += 1
-
-        if (t_for_overlap % delta_t_overlap == 0 and i < number_of_overlaps - 1):
-            i += 1
-            w, v = np.linalg.eigh(H)
-            for k in range(number_of_eigenstates):
-                vec = np.conjugate(v[:, k])
-                dot = np.dot(psi, vec)
-                overlap[0][k][i] = (
-                    np.real(dot)*np.real(dot) + np.imag(dot)*np.imag(dot))/float(dim)
-                energy[0][k][i] = w[k]
-
-    return psi
-
-
-#--------------------Evolutions with A(t), B(t) (Runge-Kutta)----------------------#
+#---------------Evolutions with A(t), B(t) (Runge-Kutta order 4)--------------#
 # Simulate the evolution and plot probability coeffiecients over time
 def evolutionABRK2(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t):
     t = 0
@@ -834,6 +460,8 @@ def evolutionABRK6(dim, H0, H1, psi, A, B, energy, overlap, t_f, delta_t, number
     return psi
 
 
+
+#-------------------------------Other functions-------------------------------#
 # Compute the overlap assuming adiabatic evolution
 def adiabaticEvolution(dim, H0, H1, Gamma, adiabatic, gs, t_f, delta_t):
     times = np.linspace(0, t_f, 100)
@@ -879,7 +507,7 @@ def spectra(dim, H0, H1, A, B, gs, divisions, number_of_bands):
     return minimum_gap, energies
 
 
-# Compute epsilon
+# Compute epsilon parameter
 def epsilon(dim, H0, H1, A, B, gs, divisions, delta_t):
     if delta_t > 1.0/(divisions - 1):
         delta_t = 1.0/divisions
@@ -920,7 +548,7 @@ def groundState(dim, H):
     return gs
 
 
-# Simulate the evolution and plot probability coeffiecients over time
+# Simulate the evolution and plot probability coeffiecients over time (RK6)
 def evolutionABRK62(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t):
     t = 0
     iteration = 0
@@ -959,7 +587,7 @@ def evolutionABRK62(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t
     return psi
 
 
-# Simulate the evolution and plot probability coeffiecients over time
+# Simulate the evolution and plot probability coeffiecients over time (RK2)
 def evolutionABRK22(dim, H0, H1, psi, A, B, successProbability, gs, t_f, delta_t):
     t = 0
     iteration = 0

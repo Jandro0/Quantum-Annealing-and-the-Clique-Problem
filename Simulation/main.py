@@ -4,9 +4,16 @@ import sys
 from random import uniform
 import numpy as np
 import scipy.integrate
+import matplotlib
 import matplotlib.colors as mcolors
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+font = {'family' : 'serif',
+        'serif' : ['Computer Modern Roman'],
+        'size'   : 10}
+matplotlib.rc('font', **font)
+plt.rcParams["font.weight"] = "normal"
+plt.rcParams["axes.labelweight"] = "normal"
 from collections import defaultdict
 from graph_things import graph, createGraph, networkToGraph, fileToNetwork, binaryToDecimal
 from graph_things import networkToFile, decimalToBinary, generalHamiltonian, evaluateHamiltonian
@@ -25,264 +32,7 @@ from evolution import evolutionABRK62, evolutionABRK22
 
 
 
-#--------------------Histogram plot of the spectrum of H_p--------------------#
-# nv = 19
-# p = 0.5
-# K = 6
-# B = 1
-# A = (K + 1)*B
-# dim = int(pow(2, nv))
-# networkG = nx.fast_gnp_random_graph(nv, p)
-# G = networkToGraph(networkG)
-# H = graph.makeHamiltonian(G, K, A, B)
-# energy = np.unique(H)
-# r = np.empty(len(energy) - 2)
-# for i in range(len(r)):
-#     r[i] = np.amin(np.array([(energy[i+2]-energy[i+1])/(energy[i+1]-energy[i]), (energy[i+1]-energy[i])/(energy[i+2]-energy[i+1])]))
-    
-# averge_r = np.mean(r)
-
-
-
-# print("Clique number: " + str(nx.graph_clique_number(networkG)))
-
-
-# # Plot the graph
-# plot1 = plt.figure(1)
-# nx.draw(networkG, with_labels = True)
-# plt.show() 
-
-# # Plot histogram of energies
-# plot2 = plt.figure(2)
-# plt.hist(H, bins = 20)
-# plt.show()
-
-
-# # Plot histogram of energy distances
-# plot3 = plt.figure(3)
-# plt.hist(r, bins = 10)
-# plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-#-------------------NP-complete problem with random graphs--------------------#
-# # PROBABILITY OF SUCCESS AT A GIVEN TIME
-# nv_min = 4  #Minimum number of vertices
-# nv_max = 8  #Maximum number of vertices
-# p = 0.5  #Probability that there is an edge joining two vertices
-# t_f = 15  #Time of the evolution
-# delta_t = 0.1  #Step in the Crank-Nicolson/Runge-Kutta algorithm
-# iterations = int(t_f/delta_t)  #Number of times the Crank-Nicolson algorithm is called
-# number_of_experiments = 20  #Number of simulations for each size
-# probability_at_tf = np.empty(number_of_experiments)  #Probabilities of success at a given time
-# meanProbability = np.empty(nv_max - nv_min + 1)  #Mean probabilities for each size
-# deviationProbability = np.empty(nv_max - nv_min + 1)  #Standard deviation of the probabilities for each size
-
-# for nv in range(nv_min, nv_max + 1):
-#     K = int(nv/2) 
-#     B = 1
-#     A = (K + 1)*B
-#     dim = int(pow(2, nv))
-#     H0 = makeInitialHamiltonian(nv)
-    
-#     for i in range(number_of_experiments):
-#         # Create graphs
-#         networkG = nx.fast_gnp_random_graph(nv, p)
-#         G = networkToGraph(networkG)
-#         H = graph.makeHamiltonian(G, K, A, B)
-        
-#         # Create Hamiltonian matrices and initial state
-#         gs = groundState(dim, H)
-#         H1 = makeFinalHamiltonian(dim, H)
-#         psi = np.ones(dim, dtype = complex)
-#         successProbability = [np.empty(0)]
-        
-#         # Make evolution
-#         psi = evolutionABCN3(dim, H0, H1, psi, fun.linearA, fun.linearB, successProbability, gs, t_f, delta_t)
-        
-#         # Probabilities
-#         probability = np.empty(dim)
-#         for k in range(dim):
-#             probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
-#         probability = probability / float(dim)
-#         probability = np.amax(H) * probability
-#         xAxis1 = np.linspace(0, dim - 1,  dim)
-#         xAxis2 = np.linspace(0, t_f, len(successProbability[0]))
-#         probability_at_tf[i] = successProbability[0][-1]
-        
-#         # Draw stuff
-#         plot1 = plt.figure(1)
-#         plt.title("Graph #" + str(i + 1) + " (" + str(nx.graph_clique_number(networkG)) + ")")
-#         plt.plot(xAxis1, H)
-#         plt.plot(xAxis1, probability)
-        
-#         plot2 = plt.figure(2)
-#         plt.title("Graph #" + str(i + 1) + " (" + str(nx.graph_clique_number(networkG)) + ")")
-#         plt.xlim([0, t_f])
-#         plt.ylim([0, 1])
-#         plt.scatter(xAxis2, successProbability[0], 0.1)
-        
-#         plot3 =plt.figure(3)
-#         nx.draw(networkG, with_labels = True)
-    
-#         plt.show()
-    
-#     meanProbability[nv - nv_min] = np.mean(probability_at_tf)
-#     deviationProbability[nv - nv_min] = np.std(probability_at_tf)
-#     print("Graphs with " + str(nv) + " vertices:")    
-#     print("Mean probability: " + str(meanProbability[nv - nv_min]))
-#     print("Deviation: " + str(deviationProbability[nv - nv_min]))
-#     print("")
-
-# xAxis = np.linspace(nv_min, nv_max, nv_max - nv_min + 1)
-# plt.figure()
-# plt.xlim([nv_min - 1, nv_max + 1])
-# plt.ylim([0,1])
-# plt.scatter(xAxis, meanProbability, 100)
-# plt.show()
-    
-
-
-
-
-# AVERAGE TIME TO ACHIVE A GIVEN PROBABILITY OF SUCCESS
-# nv_min = 4  #Minimum number of vertices
-# nv_max = 5  #Maximum number of vertices
-# p = 0.5  #Probability that there is an edge joining two vertices
-# pSuccess = 0.2  #Considered probability of success
-# delta_t = 0.1  #Step in the Crank-Nicolson algorithm
-# number_of_experiments = 20  #Number of simulations for each size
-# time_for_pSuccess = np.empty(number_of_experiments)
-# meanTime = np.empty(nv_max - nv_min + 1)  #Mean time for each size
-# deviationTime = np.empty(nv_max - nv_min + 1)  #Standard deviation of the time for each size
-
-# for nv in range(nv_min, nv_max + 1):
-#     K = int(nv/2) 
-#     B = 1
-#     A = (K + 1)*B
-#     dim = int(pow(2, nv))
-#     H0 = makeInitialHamiltonian(nv)
-    
-#     for i in range(number_of_experiments):
-#         # Create graphs
-#         networkG = nx.fast_gnp_random_graph(nv, p)
-#         G = networkToGraph(networkG)
-#         H = graph.makeHamiltonian(G, K, A, B)
-        
-#         # Create Hamiltonian matrices and initial state
-#         gs = groundState(dim, H)
-#         H1 = makeFinalHamiltonian(dim, H)
-#         psi = np.ones(dim, dtype = complex)
-#         successProbability = [np.empty(0)]
-        
-#         # Make evolution
-#         t_f = [0.]
-#         psi = evolution4(dim, H0, H1, psi, fun.exponentialsqrt, successProbability, pSuccess, gs, t_f, delta_t)
-        
-#         # Probabilities
-#         probability = np.empty(dim)
-#         for k in range(dim):
-#             probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
-#         probability = probability / float(dim)
-#         probability = np.amax(H) * probability
-#         xAxis1 = np.linspace(0, dim - 1,  dim)
-#         xAxis2 = np.linspace(0, t_f[0], len(successProbability[0]))
-#         time_for_pSuccess[i] = t_f[0]
-        
-#         # Draw stuff
-#         plot1 = plt.figure(1)
-#         plt.title("Graph #" + str(i + 1) + " (" + str(nx.graph_clique_number(networkG)) + ")")
-#         plt.plot(xAxis1, H)
-#         plt.plot(xAxis1, probability)
-        
-#         plot2 = plt.figure(2)
-#         plt.title("Graph #" + str(i + 1) + " (" + str(nx.graph_clique_number(networkG)) + ")")
-#         plt.ylim([0, pSuccess + 0.05])
-#         plt.scatter(xAxis2, successProbability[0], 0.1)
-        
-#         plot3 =plt.figure(3)
-#         nx.draw(networkG, with_labels = True)
-    
-#         plt.show()
-    
-#     meanTime[nv - nv_min] = np.mean(time_for_pSuccess)
-#     deviationTime[nv - nv_min] = np.std(time_for_pSuccess)
-#     print("Graphs with " + str(nv) + " vertices:")    
-#     print("Mean time: " + str(meanTime[nv - nv_min]))
-#     print("Deviation: " + str(deviationTime[nv - nv_min]))
-#     print("")
-
-# xAxis = np.linspace(nv_min, nv_max, nv_max - nv_min + 1)
-# plt.figure()
-# plt.xlim([nv_min - 1, nv_max + 1])
-# plt.scatter(xAxis, meanTime, 50)
-# plt.show()
-
-
-
-
-
-#---------------------NP-complete problem (plot overlap)----------------------#
-# #Create graph
-# networkG = nx.fast_gnp_random_graph(5, 0.6)
-# G = networkToGraph(networkG)
-# H = graph.makeHamiltonian(G, 3, 10, 1)
-
-
-
-# #Create Hamiltonian matrices and initial state
-# dim = len(H)
-# t_f = 50
-# delta_t = 0.01
-# iterations = int(t_f/delta_t)
-# gs = groundState(dim, H)
-# H1 = makeFinalHamiltonian(dim, H)
-# H0 = makeInitialHamiltonian(len(G.adjacency))
-# psi = np.ones(dim, dtype = complex)
-# overlap = [np.empty(0)]
-
-# # #Make evolution
-# psi = evolutionABRK5(dim, H0, H1, psi, fun.linearA, fun.linearB, overlap, gs, t_f, delta_t)
-
-# # Probabilities
-# probability = np.empty(dim)
-# for k in range(dim):
-#     probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
-# probability = probability / float(dim)
-# probability =  np.amax(H) * probability
-# xAxis1 = np.linspace(0, dim - 1,  dim)
-# xAxis2 = np.linspace(0, t_f, len(overlap[0]))
-
-
-
-# # Draw stuff
-# plot1 = plt.figure(1)
-# plt.plot(xAxis1, H)
-# plt.plot(xAxis1, probability)
-
-# plot2 = plt.figure(2)
-# plt.xlim([0,t_f])
-# plt.ylim([0,1])
-# plt.scatter(xAxis2, overlap, 0.1)
-
-# plot3 = plt.figure(3)
-# nx.draw(networkG, with_labels = True)
-# plt.show()
-
-
-
-
-
-#---------------------------NP-complete problem-------------------------------#
+#----------------Simulation of the logical system for random instances---------------#
 # nv_min = 3  #Minimum number of vertices
 # nv_max = 5 #Maximum number of vertices
 # p = 0.7  #Probability that there is an edge joining two vertices
@@ -536,20 +286,20 @@ from evolution import evolutionABRK62, evolutionABRK22
 
 
 
-#---------------------------NP-complete problem-------------------------------#
+#---------------Simulation of the logical system for a fixed graph------------------#
 # #Create graph
-# G = createGraph("graph2.txt")
+# G = createGraph("graph5.txt")
 # networkG = graph.toNetwork(G)
 
 
 # #Create Hamiltonian matrices and initial state
 # c = [0]
 # K = nx.graph_clique_number(networkG)
-# beta = 1.
-# alpha = (K + 1)*beta
-# H = graph.makeIsingHamiltonian(G, K, alpha, beta, c)
+# alpha = 1.0
+# beta = 2*alpha
+# H = graph.makeIsingHamiltonian(G, alpha, beta, c)
 # dim = len(H)
-# t_f = 10.0
+# t_f = 2.0
 # delta_t = 0.01
 # number_of_eigenstates = 6
 # number_of_overlaps = 50
@@ -627,17 +377,17 @@ from evolution import evolutionABRK62, evolutionABRK22
 
 
 
-# # # Plot final Hamiltonian spectra and final state
-# # probability = np.empty(dim)
-# # for k in range(dim):
-# #     probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
-# # probability = probability / float(dim)
-# # probability =  np.amax(H)*probability
+# # Plot final Hamiltonian spectra and final state
+# probability = np.empty(dim)
+# for k in range(dim):
+#     probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
+# probability = probability / float(dim)
+# probability =  np.amax(H)*probability
 
-# # plot1 = plt.figure(1)
-# # xAxis1 = np.linspace(0, dim - 1,  dim)
-# # plt.plot(xAxis1, H)
-# # plt.plot(xAxis1, probability)
+# plot1 = plt.figure(1)
+# xAxis1 = np.linspace(0, dim - 1,  dim)
+# plt.plot(xAxis1, H)
+# plt.plot(xAxis1, probability)
 
 
 
@@ -722,17 +472,20 @@ from evolution import evolutionABRK62, evolutionABRK22
 # # plt.show()
 
 
-#---------------------Spectra of H1 and H(s) for varying chain strength-------#
+
+
+
+#-----------------Spectra of H1 and H(s) for varying chain strength-----------------#
 # #Create graph 
-# G = createGraph("graph2.txt")
+# G = createGraph("graph5.txt")
 # networkG = graph.toNetwork(G)
 
 
 # #Parameters
 # c = [0]
 # K = nx.graph_clique_number(networkG)
-# beta = 1.
-# alpha = (K + 1)*beta
+# alpha = 1.0
+# beta = 2*alpha
 # min_RCS = 0.0
 # max_RCS = 2.0
 # num_RCS = 250
@@ -747,7 +500,7 @@ from evolution import evolutionABRK62, evolutionABRK22
 # spectra_of_Hr = np.empty((number_of_eigenstates, num_RCS))
 # minimum_gap = np.empty(num_RCS)
 # target_graph = fileToNetwork("chimera.txt")
-# minor = {0: [4, 2], 1: [7, 3], 2: [6], 3: [0]}
+# minor = {0: [2028], 2: [2027, 2029], 3: [2024], 1: [2031], 4: [1033]}
 # number_of_physical_qubits = 0
 # for i in range(len(minor)):
 #     number_of_physical_qubits += len(minor[i])
@@ -755,9 +508,10 @@ from evolution import evolutionABRK62, evolutionABRK22
 # A, B = fun.schedule("DW_2000Q_6.txt")
 
 # for i in range(num_RCS):
-#     H = graph.makeHamiltonianWithChains(G, target_graph, minor, K, alpha, beta, c, RCS[i])
+#     H = graph.makeHamiltonianWithChains(G, target_graph, minor, alpha, beta, c, RCS[i])
 #     dim = len(H)
 #     gs = groundState(dim, H)
+#     print(str(RCS[i]) + ': ' + str(gs))
 #     H1 = makeFinalHamiltonian(dim, H)
 #     energy = np.linalg.eigvalsh(H1)
     
@@ -768,57 +522,56 @@ from evolution import evolutionABRK62, evolutionABRK22
     
         
         
-# #Plot animation of H(s) vs RCS
-# plt.figure()
-# for i in range(num_RCS):
-#     print(RCS[i])
-#     H = graph.makeHamiltonianWithChains(G, target_graph, minor, K, alpha, beta, c, RCS[i])
-#     dim = len(H)
-#     gs = groundState(dim, H)
-#     H1 = makeFinalHamiltonian(dim, H)
+# # #Plot animation of H(s) vs RCS
+# # plt.figure()
+# # for i in range(num_RCS):
+# #     H = graph.makeHamiltonianWithChains(G, target_graph, minor, K, alpha, beta, c, RCS[i])
+# #     dim = len(H)
+# #     gs = groundState(dim, H)
+# #     H1 = makeFinalHamiltonian(dim, H)
 
-#     for j in range(s_divisions):
-#         energy = np.linalg.eigvalsh(A(sVector[j])*H0 + sVector[j]*H1)
-#         for k in range(number_of_eigenstates):
-#             spectra_of_H[k][j] = energy[k]
+# #     for j in range(s_divisions):
+# #         energy = np.linalg.eigvalsh(A(sVector[j])*H0 + sVector[j]*H1)
+# #         for k in range(number_of_eigenstates):
+# #             spectra_of_H[k][j] = energy[k]
         
-#     plt.xlim([0.6, 1])
-#     plt.ylim([-10, 0])
-#     plt.title("RCS = " + str(RCS[i]))
-#     plt.xlabel("Scaled annealing time t/T")
-#     plt.ylabel("Energy (GHz)")
-#     for j in range(number_of_eigenstates):
-#         plt.plot(sVector, spectra_of_H[j])
-#     plt.savefig("RCS" + str(i) + ".png", bbox_inches='tight', dpi=300)
-#     plt.pause(0.0000001)
-#     plt.clf()
+# #     plt.xlim([0.6, 1])
+# #     plt.ylim([-10, 0])
+# #     plt.title("RCS = " + str(RCS[i]))
+# #     plt.xlabel("Scaled annealing time t/T")
+# #     plt.ylabel("Energy (GHz)")
+# #     for j in range(number_of_eigenstates):
+# #         plt.plot(sVector, spectra_of_H[j])
+# #     plt.savefig("RCS" + str(i) + ".png", bbox_inches='tight', dpi=300)
+# #     plt.pause(0.0000001)
+# #     plt.clf()
 
-# #Plot animation of H(RCS) vs s
-# plt.figure()
-# for i in range(s_divisions):
-#     for j in range(num_RCS):
-#         H = graph.makeHamiltonianWithChains(G, target_graph, minor, K, alpha, beta, c, RCS[j])
-#         dim = len(H)
-#         gs = groundState(dim, H)
-#         H1 = makeFinalHamiltonian(dim, H)
-#         energy = np.linalg.eigvalsh(A(sVector[i])*H0 + sVector[i]*H1)
-#         for k in range(number_of_eigenstates):
-#             spectra_of_Hr[k][j] = energy[k]
+# # #Plot animation of H(RCS) vs s
+# # plt.figure()
+# # for i in range(s_divisions):
+# #     for j in range(num_RCS):
+# #         H = graph.makeHamiltonianWithChains(G, target_graph, minor, K, alpha, beta, c, RCS[j])
+# #         dim = len(H)
+# #         gs = groundState(dim, H)
+# #         H1 = makeFinalHamiltonian(dim, H)
+# #         energy = np.linalg.eigvalsh(A(sVector[i])*H0 + sVector[i]*H1)
+# #         for k in range(number_of_eigenstates):
+# #             spectra_of_Hr[k][j] = energy[k]
         
-#     plt.xlim([0, max_RCS])
-#     plt.title("s = " + str(sVector[i]))
-#     plt.xlabel("Relative chain strength")
-#     plt.ylabel("Energy (GHz)")
-#     for j in range(number_of_eigenstates):
-#         plt.plot(RCS, spectra_of_Hr[j])
-#     plt.savefig("s" + str(i) + ".png", bbox_inches='tight', dpi=300)
-#     plt.pause(0.0000001)
-#     plt.clf()
+# #     plt.xlim([0, max_RCS])
+# #     plt.title("s = " + str(sVector[i]))
+# #     plt.xlabel("Relative chain strength")
+# #     plt.ylabel("Energy (GHz)")
+# #     for j in range(number_of_eigenstates):
+# #         plt.plot(RCS, spectra_of_Hr[j])
+# #     plt.savefig("s" + str(i) + ".png", bbox_inches='tight', dpi=300)
+# #     plt.pause(0.0000001)
+# #     plt.clf()
 
 
 
 # #Plot spectra of H1 vs RCS
-# plot1 = plt.figure(1)
+# plot1 = plt.figure()
 # plt.xlim([0, max_RCS])
 # plt.xlabel("Relative chain strength")
 # plt.ylabel("Energy (GHz)")
@@ -840,9 +593,9 @@ from evolution import evolutionABRK62, evolutionABRK22
 
 
 
-#--------------------------NP-problem with chains-----------------------------#
+#---------------Simulation of the physical system for a fixed graph-----------------#
 #Create graph
-G = createGraph("graph2.txt")
+G = createGraph("graph5.txt")
 networkG = graph.toNetwork(G)
 
 
@@ -850,27 +603,29 @@ networkG = graph.toNetwork(G)
 #Parameters
 c = [0]
 K = nx.graph_clique_number(networkG)
-beta = 1.
-alpha = (K + 1)*beta
+alpha = 1.0
+beta = 2*alpha
 min_RCS = 0.0
 max_RCS = 2.0
 num_RCS = 100
 RCS = np.linspace(min_RCS, max_RCS, num_RCS)
 min_tf = 0.5
-max_tf = 8.0
+max_tf = 1.7
 num_tf = 5
 tf = np.linspace(min_tf, max_tf, num_tf)
-delta_t = 0.005
+delta_t = 0.01
 number_of_eigenstates = 6
 number_of_overlaps = 50
 physical_successProbability = []
 target_graph = fileToNetwork("chimera.txt")
-minor = {0: [4, 2], 1: [7, 3], 2: [6], 3: [0]}
+# minor = {0: [3679, 873], 1: [858], 2: [3514, 888], 3: [3619], 4: [3604], 5: [843]}
+# minor = {0: [461, 457], 3: [458], 4: [462], 5: [453], 1: [822], 2: [1352]} #graph6
+minor = {0: [2028], 2: [2027, 2029], 3: [2024], 1: [2031], 4: [1033]} #graph5
 number_of_physical_qubits = 0
 for i in range(len(minor)):
     number_of_physical_qubits += len(minor[i])
 A, B = fun.schedule("DW_2000Q_6.txt")
-logical_H = graph.makeIsingHamiltonian(G, K, alpha, beta, c)
+logical_H = graph.makeIsingHamiltonian(G, alpha, beta, c)
 logical_gs = groundState(pow(2, G.nv), logical_H)
 physical_gs = [0 for i in range(len(logical_gs))]
 for i in range(len(logical_gs)):
@@ -891,9 +646,10 @@ for i_time in range(num_tf):
     successProbability_for_a_given_tf = []
     print(i_time)
     for i in range(num_RCS):
-        H = graph.makeHamiltonianWithChains(G, target_graph, minor, K, alpha, beta, c, RCS[i])
+        H = graph.makeHamiltonianWithChains(G, target_graph, minor, alpha, beta, c, RCS[i])
         dim = len(H)
         gs = groundState(dim, H)
+        print('  ' + str(RCS[i]) + ': ' + str(gs))
         H1 = makeFinalHamiltonian(dim, H)
         H0 = makeInitialHamiltonian(number_of_physical_qubits)
         successProbabilityRK = [np.empty(0)]
@@ -1052,7 +808,6 @@ for i_time in range(num_tf):
     physical_successProbability.append(successProbability_for_a_given_tf)
 
 
-
 plot8 = plt.figure(8)
 normalize = mcolors.Normalize(vmin=min_tf, vmax=max_tf)
 colormap = cm.jet
@@ -1066,25 +821,27 @@ scalarmappaple = cm.ScalarMappable(norm=normalize, cmap=colormap)
 scalarmappaple.set_array(tf)
 plt.colorbar(scalarmappaple)
 filename = "Success probability vs chain strength.png"
-plt.savefig(filename, bbox_inches='tight', dpi=300)
+plt.savefig(filename, bbox_inches='tight', dpi=1000)
 
 
 
-#---------------------------NP-complete problem (different annealing times)-------------------------------#
+
+
+#-----------Simulation of the logical system for different annealing times------------#
 #Create graph
-G = createGraph("graph2.txt")
+G = createGraph("graph5.txt")
 networkG = graph.toNetwork(G)
 
 
 #Create Hamiltonian matrices and initial state
 c = [0]
 K = nx.graph_clique_number(networkG)
-beta = 1.
-alpha = (K + 1)*beta
-H = graph.makeIsingHamiltonian(G, K, alpha, beta, c)
+alpha = 1.0
+beta = 2*alpha
+H = graph.makeIsingHamiltonian(G, alpha, beta, c)
 dim = len(H)
 min_tf = np.power(0.5, 1.0)
-max_tf = np.power(8.0, 1.0)
+max_tf = np.power(1.7, 1.0)
 num_tf = 5
 tf = np.linspace(min_tf, max_tf, num_tf)
 tf = np.power(tf, 1.0)
@@ -1211,7 +968,7 @@ scalarmappaple = cm.ScalarMappable(norm=normalize, cmap=colormap)
 scalarmappaple.set_array(tf)
 plt.colorbar(scalarmappaple)
 filename = "Overlap with target state (DW_2000Q_6).png"
-plt.savefig(filename, bbox_inches='tight', dpi=300)
+plt.savefig(filename, bbox_inches='tight', dpi=1000)
 
 
 # Plot overlap with the instantaneous ground state
@@ -1227,7 +984,7 @@ scalarmappaple = cm.ScalarMappable(norm=normalize, cmap=colormap)
 scalarmappaple.set_array(tf)
 plt.colorbar(scalarmappaple)
 filename = "Overlap with instantaneous groundstate (DW_2000Q_6).png"
-plt.savefig(filename, bbox_inches='tight', dpi=300)
+plt.savefig(filename, bbox_inches='tight', dpi=1000)
 
 
 
@@ -1242,7 +999,7 @@ for i in range(num_tf):
     successProbability[i] = overlap_with_target[i][-1]
 plt.plot(tf, successProbability)
 filename = "Success probability vs annealing time (DW_2000Q_6).png"
-plt.savefig(filename, bbox_inches='tight', dpi=300)
+plt.savefig(filename, bbox_inches='tight', dpi=1000)
 
 
 plt.figure()
@@ -1259,11 +1016,9 @@ for i_time in range(num_tf):
     plt.plot(RCS, physical_successProbability[i_time], color = colormap(normalize(tf[i_time])), alpha = 0.7)
 for i_time in range(num_tf):
     plt.plot(xAxis2, logical_successProbability[i_time], color = colormap(normalize(tf[i_time])), alpha = 0.7, linestyle = 'dashed')
-# scalarmappaple = cm.ScalarMappable(norm=normalize, cmap=colormap)
-# scalarmappaple.set_array(tf)
 plt.colorbar(scalarmappaple)
 filename = "Success probability vs chain strength (w and wout chains).png"
-plt.savefig(filename, bbox_inches='tight', dpi=300)
+plt.savefig(filename, bbox_inches='tight', dpi=1000)
 
 
 plt.show()
@@ -1287,158 +1042,6 @@ plt.show()
 
 
 
-
-# --------------------NP-complete problem (alternative)------------------------#
-# #Create graph
-# G = createGraph("graph2.txt")
-# H = graph.makeHamiltonian3(G, 3, 1)
-# networkG = graph.toNetwork (G)
-
-
-# #Create Hamiltonian matrices and initial state
-# dim = len(H)
-# t_f = 100
-# delta_t = 0.1
-# iterations = int(t_f/delta_t)
-# gs = groundState(dim, H)
-# H1 = makeFinalHamiltonian(dim, H)
-# H0 = makeInitialHamiltonian2(dim)
-# psi = np.ones(dim, dtype = complex)
-# successProbability = [np.zeros(iterations + 1)]
-
-# #Make evolution
-# psi = evolution2(dim, H0, H1, psi, fun.exponentialsqrt, successProbability, gs, t_f, delta_t)
-
-# # Probabilities
-# probability = np.empty(dim)
-# for k in range(dim):
-#     probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
-# probability = probability / float(dim)
-
-
-
-# probability =  50*probability
-# xAxis1 = np.linspace(0, dim - 1,  dim)
-# xAxis2 = np.linspace(0, t_f, iterations + 1)
-
-
-
-# # Draw stuff
-# plot1 = plt.figure(1)
-# plt.plot(xAxis1, H)
-# plt.plot(xAxis1, probability)
-
-# plot2 = plt.figure(2)
-# plt.xlim([0,t_f])
-# plt.ylim([0,1])
-# plt.scatter(xAxis2, successProbability[0], 0.1)
-
-# plt.show()
-
-# nx.draw(networkG, with_labels = True)
-
-
-
-# -----------------------------NP-hard problem---------------------------------#
-# #Create graph
-# G = createGraph("graph1.txt")
-# H = graph.makeHamiltonian2(G, 20, 3, 1)
-# networkG = graph.toNetwork (G)
-
-# #Create Hamiltonian matrices and initial state
-# dim = len(H)
-# t_f = 1
-# delta_t = 0.5
-# iterations = int(t_f/delta_t)
-# gs = groundState(dim, H)
-# H1 = makeFinalHamiltonian(dim, H)
-# H0 = makeInitialHamiltonian(len(G.adjacency) + int(np.floor(np.log2(len(G.adjacency)))) + 1)
-# psi = np.ones(dim, dtype = complex)
-# successProbability = [np.zeros(iterations + 1)]
-
-# #Make evolution
-# psi = evolution2(dim, H0, H1, psi, fun.exponentialsqrt, successProbability, gs, t_f, delta_t)
-
-# # Probabilities
-# probability = np.empty(dim)
-# for k in range(dim):
-#     probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
-# probability = probability / float(dim)
-
-
-
-# probability =  50*probability
-# xAxis1 = np.linspace(0, dim - 1,  dim)
-# xAxis2 = np.linspace(0, t_f, iterations + 1)
-
-
-
-# # Draw stuff
-# plot1 = plt.figure(1)
-# plt.plot(xAxis1, H)
-# plt.plot(xAxis1, probability)
-
-# plot2 = plt.figure(2)
-# plt.xlim([0,t_f])
-# plt.ylim([0,1])
-# plt.scatter(xAxis2, successProbability[0], 0.1)
-
-# plt.show()
-
-# nx.draw(networkG, with_labels = True)
-
-
-
-
-
-# -----------------------NP-hard problem (alternative)-------------------------#
-# #Create graph
-# G = createGraph("graph1.txt")
-# H = graph.makeHamiltonian4(G, 3, 1)
-# networkG = graph.toNetwork (G)
-
-# #Create Hamiltonian matrices and initial state
-# dim = len(H)
-# t_f = 300
-# delta_t = 0.5
-# iterations = int(t_f/delta_t)
-# gs = groundState(dim, H)
-# H1 = makeFinalHamiltonian(dim, H)
-# H0 = makeInitialHamiltonian2(dim)
-# psi = np.ones(dim, dtype = complex)
-# successProbability = [np.zeros(iterations + 1)]
-
-# #Make evolution
-# psi = evolution2(dim, H0, H1, psi, fun.exponentialsqrt, successProbability, gs, t_f, delta_t)
-
-
-# # Probabilities
-# probability = np.empty(dim)
-# for k in range(dim):
-#     probability[k] = np.real(psi[k])*np.real(psi[k]) + np.imag(psi[k])*np.imag(psi[k])
-# probability = probability / float(dim)
-
-
-
-# probability =  50*probability
-# xAxis1 = np.linspace(0, dim - 1,  dim)
-# xAxis2 = np.linspace(0, t_f, iterations + 1)
-
-
-
-# # Draw stuff
-# plot1 = plt.figure(1)
-# plt.plot(xAxis1, H)
-# plt.plot(xAxis1, probability)
-
-# plot2 = plt.figure(2)
-# plt.xlim([0,t_f])
-# plt.ylim([0,1])
-# plt.scatter(xAxis2, successProbability[0], 0.1)
-
-# plt.show()
-
-# nx.draw(networkG, with_labels = True)
 
 
 
@@ -1558,6 +1161,10 @@ plt.show()
 
 # print("Optimal RCS in terms of gap: " + str(optimal_RCS_gap))
 # print("Optimal RCS in terms of probability: " + str(optimal_RCS_prob))
+
+
+
+
 
 
 

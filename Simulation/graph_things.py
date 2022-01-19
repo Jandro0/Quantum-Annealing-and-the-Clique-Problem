@@ -1,3 +1,6 @@
+#This file includes graph-related functions
+
+
 import numpy as np
 import scipy.special
 import networkx as nx
@@ -25,8 +28,8 @@ class graph:
         
         
         
-    # Create the Hamiltonian with chains for graph2.txt
-    def makeHamiltonianWithChains (self, target_graph, minor, K, A, B, c, RCS):
+    # Create the Hamiltonian with chains
+    def makeHamiltonianWithChains (self, target_graph, minor, A, B, c, RCS):
         used_nodes = []
         for vertex in minor:
             for node in minor[vertex]:
@@ -48,24 +51,19 @@ class graph:
             h[(node)] = 0
         for i in range(self.nv):
             chain_length = float(len(minor[i]))
-            logical_h[(i)]= -A*(2*K-self.nv)/2. - B*len(self.adjacency[i])/4.
+            logical_h[(i)]= -A/2.0 + B*(self.nv - 1 -len(self.adjacency[i]))/4.0
             for node in minor[i]:
                 h[(node)] = logical_h[(i)]/chain_length
                 
         logical_J = defaultdict(int)
         for i in range(self.nv):
             for j in range(i):
-                logical_J[(i,j)] = A/2.
-            for j in self.adjacency[i]:
-                if (i > j):
-                    logical_J[(i,j)] -= B/4.
+                if (j in self.adjacency[i]):
+                    logical_J[(i,j)] = 0.0
+                else:
+                    logical_J[(i,j)] = B/4.0
         
-        # logical_J_values = logical_J.values()
-        # logical_J_max = max(logical_J_values)
-        # logical_J_min = min(logical_J_values)
-        # logical_h_max = max(logical_h.values())
-        # logical_h_min = min(logical_h.values())
-        # chain_strength = max(logical_J_max, -logical_J_min, logical_h_max, -logical_h_min) * RCS
+        
         
         J = defaultdict(int)
         for i in range(number_of_physical_qubits):
@@ -86,17 +84,24 @@ class graph:
                             J[(max(node_i, node_j), min(node_i, node_j))] = logical_J[(i,j)]/number_of_connections
             
         
-        c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
+        c[0] = -A*self.nv/2.0 + B*(self.nv*(self.nv-1)/2 - self.ne)/4.0
         
         
         h_range = 2.0
         J_range = 1.0
-        J_values = J.values()
-        J_max = max(J_values)
-        J_min = min(J_values)
-        h_max = max(h.values())
-        h_min = min(h.values())
-        chain_strength = max(J_max, -J_min, h_max/h_range, -h_min/h_range) * RCS
+        # J_values = J.values()
+        # J_max = max(J_values)
+        # J_min = min(J_values)
+        # h_max = max(h.values())
+        # h_min = min(h.values())
+        # chain_strength = max(J_max, -J_min, h_max/h_range, -h_min/h_range) * RCS
+        
+        logical_J_values = logical_J.values()
+        logical_J_max = max(logical_J_values)
+        logical_J_min = min(logical_J_values)
+        logical_h_max = max(logical_h.values())
+        logical_h_min = min(logical_h.values())
+        chain_strength = max(logical_J_max, -logical_J_min, logical_h_max, -logical_h_min) * RCS
         
         for i in range(self.nv):
             chain = used_graph.subgraph(minor[i])
@@ -106,7 +111,6 @@ class graph:
         
         
         h_values = h.values() 
-        
         h_max = max(h_values)
         h_min = min(h_values)
         J_values = J.values()
@@ -133,28 +137,29 @@ class graph:
         
         return Hamiltonian
         
-        
-        
-    # Create the Ising Hamiltonian as a vector in the NP-complete case
-    def makeIsingHamiltonian(self, K, A, B, c):
+    
+    # Create Hamiltonian in Ising form
+    def makeIsingHamiltonian(self, A, B, c):
         dim = pow(2, self.nv)
         Hamiltonian = np.zeros(dim)
         state = [-1 for i in range(self.nv)]
         
         h = defaultdict(int)
         for i in range(self.nv):
-            h[(i)] = -A*(2*K-self.nv)/2. - B*len(self.adjacency[i])/4.
+            h[(i)] = -A/2.0 + B*(self.nv - 1 -len(self.adjacency[i]))/4.0
+
         
         J = defaultdict(int)
         for i in range(self.nv):
             for j in range(i):
-                J[(i,j)] = A/2.
-            for j in self.adjacency[i]:
-                if (i > j):
-                    J[(i,j)] -= B/4.
+                if (j in self.adjacency[i]):
+                    J[(i,j)] = 0.0
+                else:
+                    J[(i,j)] = B/4.0
         
-        c[0] = A*K*K + (B*K*(K-1) - A*(2*K-1)*self.nv)/2. + (A*self.nv*(self.nv-1) - B*self.ne)/4.
-        
+        c[0] = -A*self.nv/2.0 + B*(self.nv*(self.nv-1)/2 - self.ne)/4.0
+
+
         h_values = h.values() 
         h_range = 2.0
         h_max = max(h_values)
@@ -184,125 +189,6 @@ class graph:
         
         return Hamiltonian
         
-    
-        
-    # Create the Hamiltionian as a vector in the NP-complete case
-    def makeHamiltonian(self, K, A, B):
-        dim = pow(2,self.nv)
-        Hamiltonian = np.empty(dim)
-        state = []
-        
-        for i in range(self.nv):
-            state.append(0)
-        
-        for i in range(dim):
-            sum1 = 0 
-            sum2 = 0
-            for v in range(self.nv):
-                sum1 += state[v]
-                if (state[v] == 1):
-                    for k in self.adjacency[v]:
-                        sum2 += state[k]
-                            
-            Hamiltonian[i] = (A * pow(K - sum1, 2) + B * (K*(K-1) - sum2)/2) 
-            plus1(state)
-        
-        
-        return Hamiltonian
-    
-    
-    # Create the Hamiltionian as a vector in the NP-hard case
-    def makeHamiltonian2(self, A, B, C):
-        M = int(np.floor(np.log2(self.nv)))
-        N = int(self.nv + M + 1)
-        dim = pow(2, N)
-        Hamiltonian = np.empty(dim)
-        state = []
-        
-        for i in range(N):
-            state.append(0)
-        
-        for i in range(dim):
-            sum1 = 0
-            sum2 = 0
-            sum3 = 0
-            for v in range(self.nv):
-                sum1 += state[v]
-                if (state[v] == 1):
-                    for k in self.adjacency[v]:
-                        sum2 += state[k]
-            for k in range(M + 1):
-                sum3 += pow(2, M - k) * state[self.nv + k]            
-                            
-            Hamiltonian[i] = A * pow(sum3 - sum1, 2) + B * (sum3*(sum3-1) - sum2)/2 - C*sum1
-            plus1(state)
-        
-        
-        return Hamiltonian
-    
-    
-    
-    # Create the Hamiltionian as a vector in the NP-complete (alternative) case
-    def makeHamiltonian3 (self, K, B):
-        dim = int(scipy.special.binom(self.nv, K))
-        Hamiltonian = np.empty(dim)
-        state = []
-        
-        for i in range(self.nv):
-            state.append(0)
-    
-        i = 0
-        while (i < dim):
-            number = 0
-            for k in range(self.nv):
-                number += state[k]
-            if (number == K):
-                sum1 = 0 
-                for v in range(self.nv):
-                    if (state[v] == 1):
-                        for k in self.adjacency[v]:
-                            sum1 += state[k]
-                                
-                Hamiltonian[i] = B * (K*(K-1) - sum1)/2 
-                i += 1
-            
-            plus1(state)
-    
-        return Hamiltonian
-    
-    
-    # Create the Hamiltionian as a vector in the NP-hard (alternative) case
-    def makeHamiltonian4 (self, B, C):
-        dim = int(pow(2,self.nv))
-        R = int(self.nv + np.floor(np.log2(self.nv)) + 1)
-        Hamiltonian = np.empty(dim)
-        state = []
-        
-        for i in range(R):
-            state.append(0)
-    
-        i = 0
-        while (i < dim):
-            number = 0
-            size = 0
-            for k in range(self.nv):
-                number += state[k]
-            for k in range(self.nv, R):
-                size += int(pow(2, R-k-1))*state[k]
-                
-            if (number == size):
-                sum1 = 0 
-                for v in range(self.nv):
-                    if (state[v] == 1):
-                        for k in self.adjacency[v]:
-                            sum1 += state[k]
-                                
-                Hamiltonian[i] = B * (size*(size-1) - sum1)/2 - C * number
-                i += 1
-            
-            plus1(state)
-    
-        return Hamiltonian
     
     
     
@@ -343,7 +229,7 @@ def fileToNetwork (nameIn):
 
 
 
-
+# Convert a network into a graph
 def networkToGraph (networkG):
     nv = 0
     ne = 0
@@ -361,7 +247,7 @@ def networkToGraph (networkG):
     return graph(nv, ne, vertex)
 
 
-
+# Save a network in a file
 def networkToFile (network, nameOut):
     with open(nameOut, 'w') as file: 
         file.write(str(len(list(network.nodes))) + ' ' + str(len(list(network.edges))))
@@ -410,7 +296,7 @@ def nextIsing (state):
         state[n] = -1
         n += 1
  
-
+# Convert from decimal to binary
 def decimalToBinary (n, d):
     b = [0 for i in range(n)]
     
@@ -421,6 +307,8 @@ def decimalToBinary (n, d):
     
     return b
 
+
+# Convert from binary to decimal
 def binaryToDecimal (b):
     n = len(b)
     d = 0
@@ -432,7 +320,7 @@ def binaryToDecimal (b):
 
 
 
-
+# Create the Hamiltonian from the logical coefficients h_i, J_{ij}
 def generalHamiltonian (target_graph, minor, logical_h, logical_J, RCS):
     number_of_logical_qubits = len(logical_h)
     number_of_physical_qubits = 0
@@ -456,11 +344,7 @@ def generalHamiltonian (target_graph, minor, logical_h, logical_J, RCS):
             physical_h[(physical_qubit)] = logical_h[(logical_qubit)]/chain_length 
     
 
-    # logical_J_max = max(logical_J.values())
-    # logical_J_min = min(logical_J.values())
-    # logical_h_max = max(logical_h.values())
-    # logical_h_min = min(logical_h.values())
-    # chain_strength = max(logical_J_max, -logical_J_min, logical_h_max, -logical_h_min) * RCS
+
     
     
     for i in range(number_of_logical_qubits):
@@ -477,12 +361,17 @@ def generalHamiltonian (target_graph, minor, logical_h, logical_J, RCS):
     
     h_range = 2.0
     J_range = 1.0
-    physical_J_max = max(physical_J.values())
-    physical_J_min = min(physical_J.values())
-    physical_h_max = max(physical_h.values())
-    physical_h_min = min(physical_h.values())
-    chain_strength = max(physical_J_max, -physical_J_min, physical_h_max/h_range, -physical_h_min/h_range) * RCS
-    #chain_strength = max(physical_J_max, -physical_J_min) * RCS
+    logical_J_max = max(logical_J.values())
+    logical_J_min = min(logical_J.values())
+    logical_h_max = max(logical_h.values())
+    logical_h_min = min(logical_h.values())
+    chain_strength = max(logical_J_max, -logical_J_min, logical_h_max, -logical_h_min) * RCS
+    # physical_J_max = max(physical_J.values())
+    # physical_J_min = min(physical_J.values())
+    # physical_h_max = max(physical_h.values())
+    # physical_h_min = min(physical_h.values())
+    # chain_strength = max(physical_J_max, -physical_J_min, physical_h_max/h_range, -physical_h_min/h_range) * RCS
+    
     
     for i in range(number_of_logical_qubits):
         chain = target_graph.subgraph(minor[i])
@@ -518,6 +407,7 @@ def generalHamiltonian (target_graph, minor, logical_h, logical_J, RCS):
     return Hamiltonian
     
 
+# Evaluate a Hamiltonian at every state
 def evaluateHamiltonian (n, h, J):
     dim = pow(2, n)
     Hamiltonian = np.zeros(dim)
@@ -535,8 +425,18 @@ def evaluateHamiltonian (n, h, J):
 
 
 
-# networkG = nx.fast_gnp_random_graph(120, 0.6)
-# networkToFile(networkG, "graph4.txt")
-# print(nx.graph_clique_number(networkG))
+
+# p = 0.8
+# nv = 55
+# G = nx.fast_gnp_random_graph(nv, p)
+# networkToFile(G, "graph" + str(nv) + "-" + str(p) + ".txt")
+# print(nx.graph_clique_number(G))
 
 
+# G = fileToNetwork("graph" + str(nv) + "-" + str(p) + ".txt")
+# K = nx.graph_clique_number(G)
+# maximal_cliques = list(nx.find_cliques(G))
+# number_of_maximal_cliques = 0
+# for maximal_clique in maximal_cliques:
+#     if (len(maximal_clique) == K):
+#         number_of_maximal_cliques += 1
