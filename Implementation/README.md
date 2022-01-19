@@ -1,8 +1,8 @@
 # Maximum Clique Problem
 This code intends to analyse the performance of DW2000Q_6 and Advantage_system4.1
-at solving the maximum clique problem. In the image below blue vertices and solid edges constitute a maximum clique
+at solving the maximum clique problem. 
 ![clique example](clique_example.png)
-
+As an example, in the image above blue vertices and solid edges constitute a maximum clique
 
 ## Usage
 There are two main files: 
