@@ -1,6 +1,6 @@
 # Maximum Clique Problem
 This code intends to analyse the performance of DW2000Q_6 and Advantage_system4.1
-at solving the maximum clique problem (see image for a simple example of what a maximum clique of a graph is).
+at solving the maximum clique problem. In the image below blue vertices and solid edges constitute a maximum clique
 ![clique example](clique_example.png)
 
 
