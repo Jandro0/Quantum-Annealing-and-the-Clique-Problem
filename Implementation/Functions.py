@@ -1,3 +1,5 @@
+# This file includes some functions used in main code files
+
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -65,11 +67,4 @@ def physical_hJ (target_graph, minor, logical_h, logical_J):
 
 
 
-def evaluate_M (h, J, h_range, J_range):
-    h_max = max(h.values())
-    h_min = min(h.values())
-    J_max = max(J.values())
-    J_min = min(J.values())
-
-    return max(J_max, -J_min, h_max/h_range, -h_min/h_range)
 

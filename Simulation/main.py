@@ -17,10 +17,8 @@ plt.rcParams["axes.labelweight"] = "normal"
 from collections import defaultdict
 from graph_things import graph, createGraph, networkToGraph, fileToNetwork, binaryToDecimal
 from graph_things import networkToFile, decimalToBinary, generalHamiltonian, evaluateHamiltonian
-from evolution import evolutionCN2, evolutionCN3, evolutionCN4, evolutionCN5, evolutionCN6
 from evolution import evolutionABCN2, evolutionABCN3, evolutionABCN4, evolutionABCN5, evolutionABCN6
 from evolution import adiabaticEvolution, adiabaticEvolutionAB, spectra, epsilon
-from evolution import evolutionRK2, evolutionRK3, evolutionRK4, evolutionRK5, evolutionRK6
 from evolution import evolutionABRK2, evolutionABRK3, evolutionABRK4, evolutionABRK5, evolutionABRK6
 from evolution import makeInitialHamiltonian, makeInitialHamiltonian2, makeFinalHamiltonian, groundState
 import functions as fun

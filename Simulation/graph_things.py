@@ -169,6 +169,7 @@ class graph:
         J_max = max(J_values)
         J_min = min(J_values)
         
+        
         scale = max([max([h_max/h_range, 0]), max([-h_min/h_range, 0]), max([J_max/J_range, 0]), max([-J_min/J_range, 0])])
         
         
